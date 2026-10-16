@@ -4,7 +4,7 @@ class KernelitePrismError(Exception):
 
 
 class ConfigurationError(KernelitePrismError):
-    """Raised when environment variables or options are misconfigured."""
+    """Raised when environment variables, hardware devices, or options are misconfigured."""
     pass
 
 
@@ -14,7 +14,7 @@ class AggregationError(KernelitePrismError):
 
 
 class ExtractionError(KernelitePrismError):
-    """Raised when Gemini API call or Pydantic parsing fails."""
+    """Raised when local LLM inference or Pydantic parsing fails."""
     pass
 
 

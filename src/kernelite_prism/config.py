@@ -1,27 +1,41 @@
 import os
 from typing import Optional
+import torch
 from .exceptions import ConfigurationError
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+# Default to a high-capability open-weights code model
+DEFAULT_MODEL = "Qwen/Qwen2.5-Coder-7B-Instruct"
 
 
 class Settings:
-    """Holds configuration state for API keys and default model selection."""
+    """Holds configuration state for local GPU inference and model selection."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = DEFAULT_MODEL):
-        self.api_key: str = api_key or os.getenv("GEMINI_API_KEY", "")
+    def __init__(
+        self,
+        model: str = DEFAULT_MODEL,
+        device: str = "cuda",
+        hf_token: Optional[str] = None,
+    ):
         self.model: str = model
+        self.device: str = device
+        self.hf_token: Optional[str] = (
+            hf_token or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN")
+        )
 
     def validate(self) -> None:
-        if not self.api_key:
+        if self.device.startswith("cuda") and not torch.cuda.is_available():
             raise ConfigurationError(
-                "GEMINI_API_KEY is not set. Please set the GEMINI_API_KEY "
-                "environment variable or provide an API key."
+                f"Device '{self.device}' was requested, but CUDA is not available. "
+                "Ensure an NVIDIA GPU with appropriate CUDA drivers and PyTorch are installed."
             )
 
 
-def get_settings(api_key: Optional[str] = None, model: str = DEFAULT_MODEL) -> Settings:
+def get_settings(
+    model: str = DEFAULT_MODEL,
+    device: str = "cuda",
+    hf_token: Optional[str] = None,
+) -> Settings:
     """Factory function to fetch and validate settings."""
-    settings = Settings(api_key=api_key, model=model)
+    settings = Settings(model=model, device=device, hf_token=hf_token)
     settings.validate()
     return settings

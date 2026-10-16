@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 import click
 
-from .config import get_settings
+from .config import DEFAULT_MODEL, get_settings
 from .core.aggregator import aggregate_context
 from .core.extractor import extract_driver_spec
 from .core.serializer import serialize_spec
@@ -36,24 +36,43 @@ def main() -> None:
 )
 @click.option(
     "--model",
-    default="gemini-2.5-flash",
-    help="Gemini LLM model override for extraction.",
+    default=DEFAULT_MODEL,
+    help=f"Hugging Face repository ID or local weights path (default: {DEFAULT_MODEL}).",
+)
+@click.option(
+    "--device",
+    default="cuda",
+    help="Target execution device (e.g., 'cuda', 'cuda:0', 'cpu').",
+)
+@click.option(
+    "--token",
+    default=None,
+    help="Hugging Face API token (for gated repositories).",
 )
 def analyze(
-    target_path: Path, output_format: str, out: Optional[Path], model: str
+    target_path: Path,
+    output_format: str,
+    out: Optional[Path],
+    model: str,
+    device: str,
+    token: Optional[str],
 ) -> None:
     """Analyze a target C driver file or directory and produce a structured spec."""
     try:
-        settings = get_settings(model=model)
+        settings = get_settings(model=model, device=device, hf_token=token)
 
         click.echo(f"Aggregating C source context from '{target_path}'...", err=True)
         code_context = aggregate_context(target_path)
 
-        click.echo(f"Extracting driver specification using {settings.model}...", err=True)
+        click.echo(
+            f"Extracting driver specification on {settings.device} using {settings.model}...",
+            err=True,
+        )
         spec = extract_driver_spec(
             code_context=code_context,
-            api_key=settings.api_key,
             model_name=settings.model,
+            device=settings.device,
+            hf_token=settings.hf_token,
         )
 
         serialized_output = serialize_spec(spec, format_type=output_format)

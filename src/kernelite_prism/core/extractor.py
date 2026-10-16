@@ -1,57 +1,122 @@
-from google import genai
-from google.genai import types
+import json
+import re
+from typing import Optional
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from pydantic import ValidationError
 
 from ..exceptions import ExtractionError
 from ..models.base import DriverSpec
-
 
 SYSTEM_INSTRUCTION = (
     "You are an expert Linux kernel driver engineer and static code analysis assistant. "
     "Your objective is to thoroughly parse provided C source code (.c and .h files) "
     "and extract all structured driver metadata, matching tables (of_device_id, pci_device_id, "
     "usb_device_id, acpi_device_id), module parameters, entry points/lifecycle callbacks, "
-    "file operations/sysfs/ioctl control surfaces, and register map bitfields. "
-    "Output must strictly adhere to the provided JSON schema without missing available declarations."
+    "file operations/sysfs/ioctl control surfaces, and register map bitfields.\n\n"
+    "CRITICAL REQUIREMENT: Output must strictly be a single, valid JSON object satisfying "
+    "the schema provided. Do not prepend or append markdown explanations, commentary, or text outside the JSON."
 )
+
+
+def _extract_json_text(raw_output: str) -> str:
+    """Extracts raw JSON payload from markdown fences or bracket boundaries."""
+    fence_match = re.search(r"```(?:json)?\s*(\{[\s\S]*\})\s*```", raw_output)
+    if fence_match:
+        return fence_match.group(1).strip()
+
+    start_idx = raw_output.find("{")
+    end_idx = raw_output.rfind("}")
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        return raw_output[start_idx : end_idx + 1].strip()
+
+    return raw_output.strip()
 
 
 def extract_driver_spec(
     code_context: str,
-    api_key: str,
-    model_name: str = "gemini-2.5-flash",
+    model_name: str = "Qwen/Qwen2.5-Coder-7B-Instruct",
+    device: str = "cuda",
+    hf_token: Optional[str] = None,
+    max_new_tokens: int = 4096,
 ) -> DriverSpec:
-    """Submits C source context to Gemini API with Pydantic structured output enforcement."""
+    """Executes local Hugging Face model inference and parses output into DriverSpec."""
     try:
-        client = genai.Client(api_key=api_key)
+        # Determine precision based on hardware capability
+        if device.startswith("cuda") and torch.cuda.is_bf16_supported():
+            torch_dtype = torch.bfloat16
+        elif device.startswith("cuda"):
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.float32
 
-        prompt = (
-            "Analyze the following C source code and extract the driver specification:\n\n"
-            f"{code_context}"
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            token=hf_token,
+            trust_remote_code=True,
         )
 
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=DriverSpec,
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token_id = tokenizer.eos_token_id
+
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch_dtype,
+            device_map="auto" if device.startswith("cuda") else None,
+            token=hf_token,
+            trust_remote_code=True,
+        )
+
+        if not device.startswith("cuda"):
+            model = model.to(device)
+
+        schema_json = json.dumps(DriverSpec.model_json_schema(), indent=2)
+        user_prompt = (
+            f"Analyze the following C source code and extract the driver specification.\n\n"
+            f"### Target JSON Schema:\n{schema_json}\n\n"
+            f"### C Source Code Context:\n{code_context}\n\n"
+            f"### Output:\nProvide only the raw JSON output matching the schema:"
+        )
+
+        messages = [
+            {"role": "system", "content": SYSTEM_INSTRUCTION},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
+            prompt_str = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+        else:
+            prompt_str = f"{SYSTEM_INSTRUCTION}\n\n{user_prompt}"
+
+        inputs = tokenizer(prompt_str, return_tensors="pt").to(model.device)
+
+        with torch.no_grad():
+            output_tokens = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
                 temperature=0.1,
-                system_instruction=SYSTEM_INSTRUCTION,
-            ),
-        )
+                do_sample=False,
+                pad_token_id=tokenizer.pad_token_id,
+            )
 
-        if not response.text:
-            raise ExtractionError("Gemini API returned an empty response.")
+        # Decode newly generated tokens only
+        generated_ids = output_tokens[0][inputs.input_ids.shape[1] :]
+        response_text = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
 
-        # Parse and validate returned JSON string into DriverSpec
-        return DriverSpec.model_validate_json(response.text)
+        if not response_text:
+            raise ExtractionError("Hugging Face model produced an empty response.")
+
+        json_payload = _extract_json_text(response_text)
+        return DriverSpec.model_validate_json(json_payload)
 
     except ValidationError as e:
         raise ExtractionError(
-            f"Failed to validate model response against DriverSpec schema: {e}"
+            f"Failed to validate generated JSON against DriverSpec schema: {e}\n"
+            f"Extracted payload was:\n{json_payload if 'json_payload' in locals() else response_text}"
         ) from e
     except Exception as e:
         if isinstance(e, ExtractionError):
             raise
-        raise ExtractionError(f"LLM Extraction failed: {e}") from e
+        raise ExtractionError(f"Hugging Face local extraction failed: {e}") from e
