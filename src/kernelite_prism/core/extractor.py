@@ -2,7 +2,7 @@ import json
 import re
 from typing import Optional
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from pydantic import ValidationError
 
 from ..exceptions import ExtractionError
@@ -37,18 +37,28 @@ def extract_driver_spec(
     code_context: str,
     model_name: str = "Qwen/Qwen2.5-Coder-7B-Instruct",
     device: str = "cuda",
+    quantization: str = "4bit",  # "4bit", "8bit", or "none"
     hf_token: Optional[str] = None,
     max_new_tokens: int = 4096,
 ) -> DriverSpec:
-    """Executes local Hugging Face model inference and parses output into DriverSpec."""
+    """Executes local Hugging Face model inference with 4-bit / 8-bit quantization."""
     try:
-        # Determine precision based on hardware capability
-        if device.startswith("cuda") and torch.cuda.is_bf16_supported():
-            torch_dtype = torch.bfloat16
-        elif device.startswith("cuda"):
-            torch_dtype = torch.float16
-        else:
-            torch_dtype = torch.float32
+        quant_config = None
+
+        if device.startswith("cuda"):
+            compute_dtype = (
+                torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+            )
+
+            if quantization == "4bit":
+                quant_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_compute_dtype=compute_dtype,
+                )
+            elif quantization == "8bit":
+                quant_config = BitsAndBytesConfig(load_in_8bit=True)
 
         tokenizer = AutoTokenizer.from_pretrained(
             model_name,
@@ -59,15 +69,24 @@ def extract_driver_spec(
         if tokenizer.pad_token_id is None:
             tokenizer.pad_token_id = tokenizer.eos_token_id
 
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch_dtype,
-            device_map="auto" if device.startswith("cuda") else None,
-            token=hf_token,
-            trust_remote_code=True,
-        )
+        model_kwargs = {
+            "token": hf_token,
+            "trust_remote_code": True,
+        }
 
-        if not device.startswith("cuda"):
+        if quant_config is not None:
+            model_kwargs["quantization_config"] = quant_config
+            model_kwargs["device_map"] = "auto"
+        else:
+            torch_dtype = (
+                torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+            )
+            model_kwargs["torch_dtype"] = torch_dtype
+            model_kwargs["device_map"] = "auto" if device.startswith("cuda") else None
+
+        model = AutoModelForCausalLM.from_pretrained(model_name, **model_kwargs)
+
+        if quant_config is None and not device.startswith("cuda"):
             model = model.to(device)
 
         schema_json = json.dumps(DriverSpec.model_json_schema(), indent=2)
@@ -101,12 +120,13 @@ def extract_driver_spec(
                 pad_token_id=tokenizer.pad_token_id,
             )
 
-        # Decode newly generated tokens only
         generated_ids = output_tokens[0][inputs.input_ids.shape[1] :]
-        response_text = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+        response_text = tokenizer.decode(
+            generated_ids, skip_special_tokens=True
+        ).strip()
 
         if not response_text:
-            raise ExtractionError("Hugging Face model produced an empty response.")
+            raise ExtractionError("Model produced an empty response.")
 
         json_payload = _extract_json_text(response_text)
         return DriverSpec.model_validate_json(json_payload)

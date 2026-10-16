@@ -37,23 +37,31 @@ def main() -> None:
 @click.option(
     "--model",
     default=DEFAULT_MODEL,
-    help=f"Hugging Face repository ID or local weights path (default: {DEFAULT_MODEL}).",
+    help=f"Hugging Face repository ID or local path (default: {DEFAULT_MODEL}).",
+)
+@click.option(
+    "--quant",
+    "-q",
+    type=click.Choice(["4bit", "8bit", "none"], case_sensitive=False),
+    default="4bit",
+    help="Quantization precision (default: 4bit).",
 )
 @click.option(
     "--device",
     default="cuda",
-    help="Target execution device (e.g., 'cuda', 'cuda:0', 'cpu').",
+    help="Execution device ('cuda', 'cuda:0', 'cpu').",
 )
 @click.option(
     "--token",
     default=None,
-    help="Hugging Face API token (for gated repositories).",
+    help="Hugging Face API token.",
 )
 def analyze(
     target_path: Path,
     output_format: str,
     out: Optional[Path],
     model: str,
+    quant: str,
     device: str,
     token: Optional[str],
 ) -> None:
@@ -65,13 +73,14 @@ def analyze(
         code_context = aggregate_context(target_path)
 
         click.echo(
-            f"Extracting driver specification on {settings.device} using {settings.model}...",
+            f"Extracting specification on {settings.device} [{quant}] using {settings.model}...",
             err=True,
         )
         spec = extract_driver_spec(
             code_context=code_context,
             model_name=settings.model,
             device=settings.device,
+            quantization=quant,
             hf_token=settings.hf_token,
         )
 

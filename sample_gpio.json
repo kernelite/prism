@@ -1,0 +1,36 @@
+{
+  "driver_name": "sample-gpio",
+  "metadata": {
+    "author": "Driver Dev <dev@example.com>",
+    "license": "GPL",
+    "description": "Sample MMIO GPIO controller",
+    "parameters": []
+  },
+  "matching_tables": {
+    "of_device_id": [
+      {
+        "compatible": "vendor,sample-gpio-v1",
+        "raw_entry": {
+          ".compatible": "vendor,sample-gpio-v1"
+        }
+      }
+    ],
+    "pci_device_id": [],
+    "usb_device_id": [],
+    "acpi_device_id": []
+  },
+  "interfaces": {
+    "file_operations": [],
+    "sysfs_attributes": [],
+    "procfs_entries": [],
+    "ioctl_commands": []
+  },
+  "lifecycle": {
+    "probe_function": "sample_gpio_probe",
+    "remove_function": "sample_gpio_remove"
+  },
+  "structs": [
+    "platform_driver"
+  ],
+  "registers": []
+}
