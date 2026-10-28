@@ -107,6 +107,9 @@ os.makedirs("/content/drive/MyDrive/Kernelite/hf_cache", exist_ok=True)
 os.makedirs("/content/drive/MyDrive/Kernelite/specs", exist_ok=True)
 os.environ["HF_HOME"] = "/content/drive/MyDrive/Kernelite/hf_cache"
 
+# Clone the latest linux source tree commit
+!git clone --depth 1 https://github.com/torvalds/linux.git /content/linux
+
 # Install Dependencies
 !pip install -q transformers accelerate bitsandbytes pydantic click pyyaml
 !rm -rf /content/prism_app
