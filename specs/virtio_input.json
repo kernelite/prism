@@ -1,0 +1,377 @@
+{
+  "device_name": "Virtio Input Device",
+  "driver_name": "virtio_input",
+  "compatibility": [
+    "virtio,input"
+  ],
+  "hardware_info": {
+    "bus_type": "mmio",
+    "compatible_strings": [
+      "virtio,input"
+    ],
+    "vendor_ids": [],
+    "device_ids": [],
+    "base_address_offsets": [
+      {
+        "region_id": "0",
+        "name": "Virtio Input MMIO Region",
+        "base_offset": "0x0",
+        "size_hint": "0x1000",
+        "description": "MMIO region for Virtio Input device"
+      }
+    ],
+    "endianness": "little",
+    "irq_lines": [
+      "IRQ line 0"
+    ]
+  },
+  "metadata": {
+    "author": "Gerd Hoffmann <kraxel@redhat.com>",
+    "license": "GPL",
+    "description": "Virtio Input Device Driver",
+    "parameters": []
+  },
+  "matching_tables": {
+    "of_device_id": [
+      {
+        "compatible": "virtio,input",
+        "raw_entry": {}
+      }
+    ],
+    "pci_device_id": [],
+    "usb_device_id": [],
+    "acpi_device_id": [],
+    "i2c_device_id": [],
+    "spi_device_id": [],
+    "platform_device_id": [],
+    "hid_device_id": []
+  },
+  "interfaces": {
+    "file_operations": {},
+    "sysfs_attributes": [],
+    "procfs_entries": [],
+    "ioctl_commands": []
+  },
+  "lifecycle": {
+    "probe_function": "virtinput_probe",
+    "remove_function": "virtinput_remove",
+    "init_function": "virtio_input_init_vqs"
+  },
+  "structs": [
+    "virtio_driver",
+    "input_dev",
+    "virtio_device"
+  ],
+  "register_map": [
+    {
+      "name": "VIRTIO_INPUT_CONFIG_SELECT",
+      "offset": "0x0",
+      "width": 8,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Configuration select register",
+      "bitfields": [
+        {
+          "name": "VIRTIO_INPUT_CFG_UNSET",
+          "bits": "0",
+          "mask_macro": "0x0",
+          "description": "Unset configuration"
+        },
+        {
+          "name": "VIRTIO_INPUT_CFG_ID_NAME",
+          "bits": "1",
+          "mask_macro": "0x1",
+          "description": "Device name configuration"
+        },
+        {
+          "name": "VIRTIO_INPUT_CFG_ID_SERIAL",
+          "bits": "2",
+          "mask_macro": "0x2",
+          "description": "Device serial configuration"
+        },
+        {
+          "name": "VIRTIO_INPUT_CFG_ID_DEVIDS",
+          "bits": "3",
+          "mask_macro": "0x4",
+          "description": "Device ID configuration"
+        },
+        {
+          "name": "VIRTIO_INPUT_CFG_PROP_BITS",
+          "bits": "16",
+          "mask_macro": "0x10",
+          "description": "Property bits configuration"
+        },
+        {
+          "name": "VIRTIO_INPUT_CFG_EV_BITS",
+          "bits": "17",
+          "mask_macro": "0x11",
+          "description": "Event bits configuration"
+        },
+        {
+          "name": "VIRTIO_INPUT_CFG_ABS_INFO",
+          "bits": "18",
+          "mask_macro": "0x12",
+          "description": "Absolute information configuration"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_INPUT_CONFIG",
+      "offset": "0x4",
+      "width": 128,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Configuration register",
+      "bitfields": [
+        {
+          "name": "select",
+          "bits": "0:7",
+          "mask_macro": "0xFF",
+          "description": "Select configuration"
+        },
+        {
+          "name": "subsel",
+          "bits": "8:15",
+          "mask_macro": "0xFF",
+          "description": "Sub-select configuration"
+        },
+        {
+          "name": "size",
+          "bits": "16:23",
+          "mask_macro": "0xFF",
+          "description": "Size configuration"
+        },
+        {
+          "name": "reserved",
+          "bits": "24:31",
+          "mask_macro": "0xFF",
+          "description": "Reserved configuration"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_INPUT_ABSINFO",
+      "offset": "0x4",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Absolute information register",
+      "bitfields": [
+        {
+          "name": "min",
+          "bits": "0:31",
+          "mask_macro": "0xFFFFFFFF",
+          "description": "Minimum value"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_INPUT_DEVIDS",
+      "offset": "0x4",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Device ID register",
+      "bitfields": [
+        {
+          "name": "bustype",
+          "bits": "0:15",
+          "mask_macro": "0xFFFF",
+          "description": "Bus type"
+        },
+        {
+          "name": "vendor",
+          "bits": "16:31",
+          "mask_macro": "0xFFFF",
+          "description": "Vendor ID"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_INPUT_EVENT",
+      "offset": "0x4",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Input event register",
+      "bitfields": [
+        {
+          "name": "type",
+          "bits": "0:15",
+          "mask_macro": "0xFFFF",
+          "description": "Event type"
+        },
+        {
+          "name": "code",
+          "bits": "16:31",
+          "mask_macro": "0xFFFF",
+          "description": "Event code"
+        }
+      ]
+    }
+  ],
+  "init_sequence": [
+    {
+      "step": 1,
+      "operation": "MMIO Map",
+      "source_function": "virtio_input_init_vqs",
+      "target_register": "VIRTIO_INPUT_CONFIG",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "description": "Map MMIO region for Virtio Input device"
+    },
+    {
+      "step": 2,
+      "operation": "Hardware Reset",
+      "source_function": "virtio_reset_device",
+      "description": "Reset hardware"
+    },
+    {
+      "step": 3,
+      "operation": "Write Register",
+      "source_function": "virtio_cwrite_le",
+      "target_register": "VIRTIO_INPUT_CONFIG",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "description": "Write configuration register"
+    },
+    {
+      "step": 4,
+      "operation": "Read & Poll",
+      "source_function": "virtio_find_vqs",
+      "target_register": "VIRTIO_INPUT_CONFIG",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "poll_condition": "vq != NULL",
+      "description": "Find and initialize virtqueues"
+    },
+    {
+      "step": 5,
+      "operation": "Read Register",
+      "source_function": "virtio_cread_le",
+      "target_register": "VIRTIO_INPUT_CONFIG",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "description": "Read configuration register"
+    },
+    {
+      "step": 6,
+      "operation": "Memory Allocate",
+      "source_function": "kzalloc_obj",
+      "target_register": "VIRTIO_INPUT_EVENT",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "description": "Allocate memory for input events"
+    },
+    {
+      "step": 7,
+      "operation": "DMA Setup",
+      "source_function": "dma_alloc_coherent",
+      "target_register": "VIRTIO_INPUT_EVENT",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "description": "Set up DMA for input events"
+    },
+    {
+      "step": 8,
+      "operation": "Interrupt Hook",
+      "source_function": "request_irq",
+      "target_register": "VIRTIO_INPUT_EVENT",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "description": "Hook interrupt for input events"
+    },
+    {
+      "step": 9,
+      "operation": "Register Device",
+      "source_function": "input_register_device",
+      "target_register": "VIRTIO_INPUT_EVENT",
+      "offset": "0x4",
+      "value_or_mask": "0x0",
+      "description": "Register input device"
+    }
+  ],
+  "runtime_operations": {
+    "probe_handler": "virtinput_probe",
+    "remove_handler": "virtinput_remove",
+    "read_handlers": [
+      {
+        "operation_name": "rx_chars",
+        "c_function": "input_event",
+        "registers_touched": [
+          "VIRTIO_INPUT_EVENT"
+        ],
+        "description": "Receive characters from input device"
+      }
+    ],
+    "write_handlers": [
+      {
+        "operation_name": "start_tx",
+        "c_function": "virtinput_send_status",
+        "registers_touched": [
+          "VIRTIO_INPUT_EVENT"
+        ],
+        "description": "Start transmission of status"
+      }
+    ],
+    "dma_setup": {
+      "allocation_api": "dma_alloc_coherent",
+      "address_mask_bits": 64,
+      "descriptor_rings": [],
+      "coherency_notes": "Barrier/coherency notes or null"
+    },
+    "interrupt_lifecycle": {
+      "irq_handler": "virtinput_recv_events",
+      "registration_api": "request_irq",
+      "irq_flags": [
+        "IRQF_SHARED"
+      ],
+      "status_register": "VIRTIO_INPUT_EVENT",
+      "ack_register": "VIRTIO_INPUT_EVENT",
+      "mask_register": "VIRTIO_INPUT_EVENT",
+      "ack_mechanism": "Write-1-to-clear ICR",
+      "flow_steps": [
+        {
+          "step": 1,
+          "operation": "Read Register",
+          "source_function": "virtio_cread_le",
+          "target_register": "VIRTIO_INPUT_EVENT",
+          "offset": "0x4",
+          "value_or_mask": "0x0",
+          "description": "Read status register"
+        },
+        {
+          "step": 2,
+          "operation": "Write Register",
+          "source_function": "virtio_cwrite_le",
+          "target_register": "VIRTIO_INPUT_EVENT",
+          "offset": "0x4",
+          "value_or_mask": "0x0",
+          "description": "Write status register"
+        }
+      ]
+    }
+  },
+  "concurrency_locks": [
+    {
+      "linux_primitive": "spin_lock_irqsave(&vi->lock, flags)",
+      "abstract_lock_type": "IRQSafeSpinlock",
+      "protected_resources": [
+        "VIRTIO_INPUT_EVENT"
+      ],
+      "bare_metal_recommendation": "Use IRQ-safe spinlocks"
+    }
+  ],
+  "migration_notes": {
+    "linux_to_microkernel_mappings": [
+      {
+        "linux_api": "readl / writel",
+        "microkernel_equivalent": "MmioRegion::read32 / write32",
+        "notes": "Bare-metal C++ porting note"
+      }
+    ],
+    "architectural_caveats": [
+      "Important bare-metal porting caveat"
+    ]
+  }
+}

@@ -899,8 +899,8 @@
         },
         "width": {
           "default": 32,
-          "description": "Register bit width (8, 16, 32, or 64)",
-          "maximum": 64,
+          "description": "Register bit width (8, 16, 32, 64, 128, 256)",
+          "maximum": 512,
           "minimum": 8,
           "title": "Width",
           "type": "integer"

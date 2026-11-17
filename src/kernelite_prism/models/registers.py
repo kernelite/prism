@@ -66,8 +66,8 @@ class RegisterMap(BaseModel):
     width: int = Field(
         default=32,
         ge=8,
-        le=64,
-        description="Register bit width (8, 16, 32, or 64)",
+        le=512,
+        description="Register bit width (8, 16, 32, 64, 128, 256)",
     )
     access: AccessMode = Field(
         default="RW",

@@ -1,0 +1,938 @@
+{
+  "device_name": "ARM GIC",
+  "driver_name": "gic",
+  "compatibility": [
+    "arm,gic-400",
+    "arm,arm11mp-gic",
+    "arm,arm1176jzf-devchip-gic",
+    "arm,cortex-a15-gic",
+    "arm,cortex-a9-gic",
+    "arm,cortex-a7-gic",
+    "qcom,msm-8660-qgic",
+    "qcom,msm-qgic2",
+    "pl390"
+  ],
+  "hardware_info": {
+    "bus_type": "mmio",
+    "compatible_strings": [
+      "arm,gic-400",
+      "arm,arm11mp-gic",
+      "arm,arm1176jzf-devchip-gic",
+      "arm,cortex-a15-gic",
+      "arm,cortex-a9-gic",
+      "arm,cortex-a7-gic",
+      "qcom,msm-8660-qgic",
+      "qcom,msm-qgic2",
+      "pl390"
+    ],
+    "vendor_ids": [],
+    "device_ids": [],
+    "base_address_offsets": [
+      {
+        "region_id": "0",
+        "name": "GIC Distributor",
+        "base_offset": "0x0",
+        "size_hint": "0x1000",
+        "description": "Base address of the GIC Distributor"
+      },
+      {
+        "region_id": "1",
+        "name": "GIC CPU Interface",
+        "base_offset": "0x0",
+        "size_hint": "0x1000",
+        "description": "Base address of the GIC CPU Interface"
+      }
+    ],
+    "endianness": "little",
+    "irq_lines": [
+      "GIC supports 1020 interrupt sources"
+    ]
+  },
+  "metadata": {
+    "author": "ARM Limited",
+    "license": "GPL-2.0-only",
+    "description": "ARM General Interrupt Controller (GIC) driver",
+    "parameters": []
+  },
+  "matching_tables": {
+    "of_device_id": [
+      {
+        "compatible": "arm,gic-400",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "arm,arm11mp-gic",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "arm,arm1176jzf-devchip-gic",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "arm,cortex-a15-gic",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "arm,cortex-a9-gic",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "arm,cortex-a7-gic",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "qcom,msm-8660-qgic",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "qcom,msm-qgic2",
+        "raw_entry": {}
+      },
+      {
+        "compatible": "pl390",
+        "raw_entry": {}
+      }
+    ],
+    "pci_device_id": [],
+    "usb_device_id": [],
+    "acpi_device_id": [],
+    "i2c_device_id": [],
+    "spi_device_id": [],
+    "platform_device_id": [],
+    "hid_device_id": []
+  },
+  "interfaces": {
+    "file_operations": {},
+    "sysfs_attributes": [],
+    "procfs_entries": [],
+    "ioctl_commands": []
+  },
+  "lifecycle": {
+    "probe_function": "gic_of_init",
+    "remove_function": "gic_of_init_child",
+    "init_function": "__init"
+  },
+  "structs": [
+    "platform_driver",
+    "irqchip",
+    "irqchip/chained_irq",
+    "irqchip/arm-gic"
+  ],
+  "register_map": [
+    {
+      "name": "GIC_DIST_CTRL",
+      "offset": "0x0",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Control register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_CTRL_ENABLE",
+          "bits": "0",
+          "mask_macro": "0x1",
+          "description": "Enable the GIC Distributor"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_CTR",
+      "offset": "0x4",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Counter register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_CTR_Reserved",
+          "bits": "0",
+          "mask_macro": "0x3f",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_IIDR",
+      "offset": "0x8",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Identification register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICD_IIDR_IMPLEMENTER",
+          "bits": "0",
+          "mask_macro": "0xfff",
+          "description": "Implementer code"
+        },
+        {
+          "name": "GICD_IIDR_REVISION",
+          "bits": "12",
+          "mask_macro": "0xf000",
+          "description": "Revision code"
+        },
+        {
+          "name": "GICD_IIDR_VARIANT",
+          "bits": "16",
+          "mask_macro": "0xf0000",
+          "description": "Variant code"
+        },
+        {
+          "name": "GICD_IIDR_PRODUCT_ID",
+          "bits": "24",
+          "mask_macro": "0xff000000",
+          "description": "Product ID"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_IGROUP",
+      "offset": "0x80",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Interrupt group register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_IGROUP_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_PENDING_SET",
+      "offset": "0x200",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Pending set register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_PENDING_SET_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_PENDING_CLEAR",
+      "offset": "0x280",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Pending clear register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_PENDING_CLEAR_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_ACTIVE_SET",
+      "offset": "0x300",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Active set register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_ACTIVE_SET_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_ACTIVE_CLEAR",
+      "offset": "0x380",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Active clear register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_ACTIVE_CLEAR_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_PRI",
+      "offset": "0x400",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Priority register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_PRI_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_TARGET",
+      "offset": "0x800",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Target register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_TARGET_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_CONFIG",
+      "offset": "0xc00",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Configuration register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_CONFIG_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_SOFTINT",
+      "offset": "0xf00",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Software interrupt register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_SOFTINT_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_SGI_PENDING_CLEAR",
+      "offset": "0xf10",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "SGI pending clear register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_SGI_PENDING_CLEAR_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GIC_DIST_SGI_PENDING_SET",
+      "offset": "0xf20",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "SGI pending set register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GIC_DIST_SGI_PENDING_SET_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICD_ENABLE",
+      "offset": "0x1",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Enable the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICD_ENABLE_Reserved",
+          "bits": "0",
+          "mask_macro": "0x1",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICD_DISABLE",
+      "offset": "0x0",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Disable the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICD_DISABLE_Reserved",
+          "bits": "0",
+          "mask_macro": "0x1",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICD_INT_ACTLOW_LVLTRIG",
+      "offset": "0x0",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Interrupt activation low level trigger",
+      "bitfields": [
+        {
+          "name": "GICD_INT_ACTLOW_LVLTRIG_Reserved",
+          "bits": "0",
+          "mask_macro": "0x1",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICD_INT_EN_CLR_X32",
+      "offset": "0xffffffff",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0xffffffff",
+      "description": "Interrupt enable clear X32",
+      "bitfields": [
+        {
+          "name": "GICD_INT_EN_CLR_X32_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICD_INT_EN_SET_SGI",
+      "offset": "0xffff",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0xffff",
+      "description": "Interrupt enable set SGI",
+      "bitfields": [
+        {
+          "name": "GICD_INT_EN_SET_SGI_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICD_INT_EN_CLR_PPI",
+      "offset": "0xffff0000",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0xffff0000",
+      "description": "Interrupt enable clear PPI",
+      "bitfields": [
+        {
+          "name": "GICD_INT_EN_CLR_PPI_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffff0000",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICH_HCR",
+      "offset": "0x0",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "HCR register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_HCR_EN",
+          "bits": "0",
+          "mask_macro": "0x1",
+          "description": "Enable the GICH"
+        },
+        {
+          "name": "GICH_HCR_UIE",
+          "bits": "1",
+          "mask_macro": "0x2",
+          "description": "Unmasked interrupt enable"
+        },
+        {
+          "name": "GICH_HCR_LRENPIE",
+          "bits": "2",
+          "mask_macro": "0x4",
+          "description": "Level-redundant event notification interrupt enable"
+        },
+        {
+          "name": "GICH_HCR_NPIE",
+          "bits": "3",
+          "mask_macro": "0x8",
+          "description": "Non-priority interrupt enable"
+        },
+        {
+          "name": "GICH_HCR_VGrp0EIE",
+          "bits": "4",
+          "mask_macro": "0x10",
+          "description": "Virtual group 0 edge interrupt enable"
+        },
+        {
+          "name": "GICH_HCR_VGrp0DIE",
+          "bits": "5",
+          "mask_macro": "0x20",
+          "description": "Virtual group 0 deferred interrupt enable"
+        },
+        {
+          "name": "GICH_HCR_VGrp1EIE",
+          "bits": "6",
+          "mask_macro": "0x40",
+          "description": "Virtual group 1 edge interrupt enable"
+        },
+        {
+          "name": "GICH_HCR_VGrp1DIE",
+          "bits": "7",
+          "mask_macro": "0x80",
+          "description": "Virtual group 1 deferred interrupt enable"
+        },
+        {
+          "name": "GICH_HCR_EOICOUNT",
+          "bits": "31:27",
+          "mask_macro": "0xf8000000",
+          "description": "EOI count"
+        }
+      ]
+    },
+    {
+      "name": "GICH_VTR",
+      "offset": "0x4",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "VTR register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_VTR_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICH_VMCR",
+      "offset": "0x8",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "VMCR register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_VMCR_ENABLE_GRP0",
+          "bits": "0",
+          "mask_macro": "0x1",
+          "description": "Enable virtual group 0"
+        },
+        {
+          "name": "GICH_VMCR_ENABLE_GRP1",
+          "bits": "1",
+          "mask_macro": "0x2",
+          "description": "Enable virtual group 1"
+        },
+        {
+          "name": "GICH_VMCR_ACK_CTL",
+          "bits": "2",
+          "mask_macro": "0x4",
+          "description": "Acknowledge control"
+        },
+        {
+          "name": "GICH_VMCR_FIQ_EN",
+          "bits": "3",
+          "mask_macro": "0x8",
+          "description": "FIQ enable"
+        },
+        {
+          "name": "GICH_VMCR_CBPR",
+          "bits": "4",
+          "mask_macro": "0x10",
+          "description": "CBPR"
+        },
+        {
+          "name": "GICH_VMCR_EOI_MODE",
+          "bits": "9",
+          "mask_macro": "0x200",
+          "description": "EOI mode"
+        },
+        {
+          "name": "GICH_VMCR_PRIMASK",
+          "bits": "27:24",
+          "mask_macro": "0xf8000000",
+          "description": "Primary mask"
+        },
+        {
+          "name": "GICH_VMCR_BINPOINT",
+          "bits": "21:18",
+          "mask_macro": "0x70000",
+          "description": "Binpoint"
+        },
+        {
+          "name": "GICH_VMCR_ALIAS_BINPOINT",
+          "bits": "18:15",
+          "mask_macro": "0x700",
+          "description": "Alias binpoint"
+        }
+      ]
+    },
+    {
+      "name": "GICH_MISR",
+      "offset": "0x10",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "MISR register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_MISR_EOI",
+          "bits": "0",
+          "mask_macro": "0x1",
+          "description": "EOI"
+        },
+        {
+          "name": "GICH_MISR_U",
+          "bits": "1",
+          "mask_macro": "0x2",
+          "description": "U"
+        }
+      ]
+    },
+    {
+      "name": "GICH_EISR0",
+      "offset": "0x20",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "EISR0 register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_EISR0_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICH_EISR1",
+      "offset": "0x24",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "EISR1 register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_EISR1_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICH_ELRSR0",
+      "offset": "0x30",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "ELRSR0 register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_ELRSR0_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICH_ELRSR1",
+      "offset": "0x34",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "ELRSR1 register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_ELRSR1_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICH_APR",
+      "offset": "0xf0",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "APR register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_APR_Reserved",
+          "bits": "0",
+          "mask_macro": "0xffffffff",
+          "description": "Reserved bits"
+        }
+      ]
+    },
+    {
+      "name": "GICH_LR0",
+      "offset": "0x100",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "LR0 register for the GIC Distributor",
+      "bitfields": [
+        {
+          "name": "GICH_LR0_VIRTUALID",
+          "bits": "0:7",
+          "mask_macro": "0x3ff",
+          "description": "Virtual ID"
+        },
+        {
+          "name": "GICH_LR_PHYSID_CPUID",
+          "bits": "10:17",
+          "mask_macro": "0x3ff",
+          "description": "Physical ID CPUID"
+        },
+        {
+          "name": "GICH_LR_PRIORITY",
+          "bits": "23:20",
+          "mask_macro": "0x1f",
+          "description": "Priority"
+        },
+        {
+          "name": "GICH_LR_STATE",
+          "bits": "28",
+          "mask_macro": "0x3",
+          "description": "State"
+        },
+        {
+          "name": "GICH_LR_PENDING_BIT",
+          "bits": "28",
+          "mask_macro": "0x1",
+          "description": "Pending bit"
+        },
+        {
+          "name": "GICH_LR_ACTIVE_BIT",
+          "bits": "29",
+          "mask_macro": "0x1",
+          "description": "Active bit"
+        },
+        {
+          "name": "GICH_LR_EOI",
+          "bits": "19",
+          "mask_macro": "0x1",
+          "description": "EOI"
+        },
+        {
+          "name": "GICH_LR_GROUP1",
+          "bits": "30",
+          "mask_macro": "0x1",
+          "description": "Group 1"
+        },
+        {
+          "name": "GICH_LR_HW",
+          "bits": "31",
+          "mask_macro": "0x1",
+          "description": "HW"
+        }
+      ]
+    }
+  ],
+  "init_sequence": [
+    {
+      "step": 1,
+      "operation": "MMIO Map",
+      "source_function": "ioremap",
+      "target_register": "GIC Distributor",
+      "offset": "0x0",
+      "value_or_mask": "0x1000",
+      "description": "Map GIC Distributor registers"
+    },
+    {
+      "step": 2,
+      "operation": "Hardware Reset",
+      "source_function": "ioremap",
+      "target_register": "GIC CPU Interface",
+      "offset": "0x0",
+      "value_or_mask": "0x1000",
+      "description": "Map GIC CPU Interface registers"
+    },
+    {
+      "step": 3,
+      "operation": "Write Register",
+      "source_function": "writeb_relaxed",
+      "target_register": "GIC_DIST_CTRL",
+      "offset": "0x00",
+      "value_or_mask": "0x1",
+      "description": "Enable the GIC Distributor"
+    },
+    {
+      "step": 4,
+      "operation": "Read & Poll",
+      "source_function": "readl_relaxed",
+      "target_register": "GIC_DIST_CTR",
+      "offset": "0x04",
+      "value_or_mask": "0x0",
+      "poll_condition": "GIC_DIST_CTR_Reserved == 0",
+      "description": "Check GIC Distributor counter register"
+    },
+    {
+      "step": 5,
+      "operation": "Read Register",
+      "source_function": "readl_relaxed",
+      "target_register": "GIC_DIST_IIDR",
+      "offset": "0x08",
+      "value_or_mask": "0x0",
+      "description": "Read GIC Distributor identification register"
+    },
+    {
+      "step": 6,
+      "operation": "Memory Allocate",
+      "source_function": "alloc_percpu",
+      "target_register": "GIC CPU Interface",
+      "offset": "0x0",
+      "value_or_mask": "0x1000",
+      "description": "Allocate memory for GIC CPU Interface"
+    },
+    {
+      "step": 7,
+      "operation": "DMA Setup",
+      "source_function": "dma_alloc_coherent",
+      "target_register": "GIC CPU Interface",
+      "offset": "0x0",
+      "value_or_mask": "0x1000",
+      "description": "Set up DMA for GIC CPU Interface"
+    },
+    {
+      "step": 8,
+      "operation": "Interrupt Hook",
+      "source_function": "request_irq",
+      "target_register": "GIC CPU Interface",
+      "offset": "0x0",
+      "value_or_mask": "0x1000",
+      "description": "Hook interrupts for GIC CPU Interface"
+    },
+    {
+      "step": 9,
+      "operation": "Register Device",
+      "source_function": "irq_domain_alloc",
+      "target_register": "GIC Distributor",
+      "offset": "0x0",
+      "value_or_mask": "0x1000",
+      "description": "Register device for GIC Distributor"
+    }
+  ],
+  "runtime_operations": {
+    "probe_handler": "gic_of_init",
+    "remove_handler": "gic_of_init_child",
+    "read_handlers": [
+      {
+        "operation_name": "rx_chars",
+        "c_function": "generic_handle_domain_irq",
+        "registers_touched": [
+          "GIC Distributor"
+        ],
+        "description": "Handle received characters"
+      }
+    ],
+    "write_handlers": [
+      {
+        "operation_name": "start_tx",
+        "c_function": "generic_handle_domain_irq",
+        "registers_touched": [
+          "GIC Distributor"
+        ],
+        "description": "Start transmission"
+      }
+    ],
+    "dma_setup": {
+      "allocation_api": "dma_alloc_coherent",
+      "address_mask_bits": 64,
+      "descriptor_rings": [],
+      "coherency_notes": "Barrier/coherency notes or null"
+    },
+    "interrupt_lifecycle": {
+      "irq_handler": "gic_handle_irq",
+      "registration_api": "request_irq",
+      "irq_flags": [
+        "IRQF_SHARED"
+      ],
+      "status_register": "GIC_CPU_INTACK",
+      "ack_register": "GIC_CPU_EOI",
+      "mask_register": "GIC_CPU_INTACK",
+      "ack_mechanism": "Write-1-to-clear ICR",
+      "flow_steps": [
+        {
+          "step": 1,
+          "operation": "Read Register",
+          "source_function": "readl_relaxed",
+          "target_register": "GIC_CPU_INTACK",
+          "offset": "0x0c",
+          "value_or_mask": "0x0",
+          "description": "Read interrupt acknowledge register"
+        },
+        {
+          "step": 2,
+          "operation": "Write Register",
+          "source_function": "writeb_relaxed",
+          "target_register": "GIC_CPU_EOI",
+          "offset": "0x10",
+          "value_or_mask": "0x0",
+          "description": "Write EOI to interrupt acknowledge register"
+        }
+      ]
+    }
+  },
+  "concurrency_locks": [
+    {
+      "linux_primitive": "spin_lock_irqsave(&cpu_map_lock, (f))",
+      "abstract_lock_type": "IRQSafeSpinlock",
+      "protected_resources": [
+        "GIC CPU Interface"
+      ],
+      "bare_metal_recommendation": "Use IRQSafeSpinlock for critical sections"
+    }
+  ],
+  "migration_notes": {
+    "linux_to_microkernel_mappings": [
+      {
+        "linux_api": "readl / writel",
+        "microkernel_equivalent": "MmioRegion::read32 / write32",
+        "notes": "Use MmioRegion::read32 / write32 for accessing GIC registers"
+      }
+    ],
+    "architectural_caveats": [
+      "Ensure proper synchronization between GIC operations"
+    ]
+  }
+}
