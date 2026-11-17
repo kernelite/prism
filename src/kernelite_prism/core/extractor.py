@@ -14,29 +14,163 @@ from .ast_parser import ASTExtractionResult
 
 SYSTEM_INSTRUCTION = (
     "You are an expert Linux kernel driver engineer and bare-metal C++ systems architect. "
-    "Your objective is to analyze pre-parsed Linux kernel C source code (.c and .h files) "
-    "and extract a complete, deterministic hardware and driver specification for porting to a "
-    "bare-metal C++ microkernel.\n\n"
-    "MANDATORY EXTRACTION RULES:\n"
-    "1. ZERO HALLUCINATED ADDRESSES OR MASKS: Every register offset and bitmask in `register_map` "
-    "MUST strictly match the C header/source macro definitions. Never invent offsets.\n"
-    "2. ISOLATE REGISTER OFFSET EXPRESSIONS: When a register is indexed or computed dynamically "
-    "(e.g., `BASE + (i * 0x4)` or `0x03800 + (n * 0x100)`), record the base hex offset in `offset` "
-    "and preserve the exact C arithmetic formula in `offset_expression`.\n"
-    "3. CHRONOLOGICAL PROBE / INIT SEQUENCE: Populate `init_sequence` in exact execution order "
-    "matching `.probe` / early init (`MMIO Map`, `Hardware Reset`, `Write Register`, `Read & Poll`, "
-    "`Memory Allocate`, `DMA Setup`, `Interrupt Hook`, `Register Device`).\n"
-    "4. ABSTRACT CONCURRENCY PRIMITIVES: Translate every Linux lock (`spin_lock_irqsave`, "
-    "`spin_lock`, `mutex_lock`, `raw_spin_lock_irqsave`) in `concurrency_locks` into an abstract "
-    "lock (`IRQSafeSpinlock`, `Spinlock`, `SleepableMutex`, `ReadWriteLock`, `Atomic`), listing "
-    "protected registers/rings and bare-metal C++ guidance.\n"
-    "5. MAP IRQ ROUTINES TO RAW HARDWARE REGISTERS: In `runtime_operations.interrupt_lifecycle`, "
-    "trace `irqreturn_t` handlers and `request_irq` calls to the exact hardware status register, "
-    "acknowledge/clear register, mask register, acknowledgment mechanism (e.g., Read-to-clear vs. W1C), "
-    "and ordered `flow_steps`.\n\n"
-    "CRITICAL OUTPUT REQUIREMENT: Output strictly a single, valid JSON object satisfying the "
-    "provided JSON Schema Draft 2020-12. Do not emit markdown fences, commentary, or extra text."
+    "Analyze the provided Linux kernel C source code (.c and .h files) and output a concrete JSON "
+    "data object describing the hardware peripheral and driver mechanics for bare-metal C++ porting.\n\n"
+    "MANDATORY RULES:\n"
+    "1. OUTPUT DATA, NOT A JSON SCHEMA: Never emit '$schema', '$defs', 'properties', or 'anyOf'. "
+    "Emit a single populated JSON object matching the exact structure shown in the Output Template.\n"
+    "2. ZERO HALLUCINATED ADDRESSES OR MASKS: Every register offset and bitmask in `register_map` "
+    "MUST strictly match the C header/source `#define` constants. Never invent hex offsets.\n"
+    "3. ISOLATE DYNAMIC OFFSET EXPRESSIONS: When a register offset is indexed or shifted "
+    "(e.g., `BASE + (i * 0x4)` or `offset << port->regshift`), store the base hex offset in `offset` "
+    "and the C formula in `offset_expression`.\n"
+    "4. CHRONOLOGICAL PROBE / INIT SEQUENCE: Populate `init_sequence` in exact execution order "
+    "matching `.probe` / setup (`MMIO Map`, `Hardware Reset`, `Write Register`, `Read & Poll`, "
+    "`Read Register`, `Memory Allocate`, `DMA Setup`, `Interrupt Hook`, `Register Device`).\n"
+    "5. CONCURRENCY & IRQ MAPPING: Translate Linux locks (`spin_lock_irqsave`, `spin_lock`, `mutex_lock`) "
+    "into `concurrency_locks` (`IRQSafeSpinlock`, `Spinlock`, `SleepableMutex`, `ReadWriteLock`, `Atomic`), "
+    "and map `irqreturn_t` handlers in `runtime_operations.interrupt_lifecycle` to raw status, mask, "
+    "and acknowledge registers.\n\n"
+    "6. CONCISE OUTPUT BUDGET: Keep every `description` under 12 words and include only the primary control/status/IRQ bitfields (max 8 per register) so the JSON completes cleanly without truncation.\n\n""CRITICAL: Return ONLY valid, raw JSON with no markdown fences or commentary."
 )
+
+COMPACT_OUTPUT_TEMPLATE = """{
+  "device_name": "<Human-readable hardware controller name>",
+  "driver_name": "<Canonical Linux driver module name>",
+  "compatibility": ["<DTB compatible string, e.g. arm,pl011>"],
+  "hardware_info": {
+    "bus_type": "<mmio | pci | platform | i2c | spi | usb | uart | other>",
+    "compatible_strings": ["<DTB compatible string>"],
+    "vendor_ids": ["<0x... if PCI/USB>"],
+    "device_ids": ["<0x... if PCI/USB>"],
+    "base_address_offsets": [
+      {
+        "region_id": "0",
+        "name": "<MMIO region name>",
+        "base_offset": "0x0",
+        "size_hint": "<e.g. 0x1000 or null>",
+        "description": "<Region description>"
+      }
+    ],
+    "endianness": "<little | big | configurable | unknown>",
+    "irq_lines": ["<IRQ description>"]
+  },
+  "metadata": {
+    "author": "<MODULE_AUTHOR or null>",
+    "license": "<MODULE_LICENSE or null>",
+    "description": "<MODULE_DESCRIPTION or null>",
+    "parameters": []
+  },
+  "matching_tables": {
+    "of_device_id": [{"compatible": "<compatible string>"}],
+    "pci_device_id": [],
+    "platform_device_id": []
+  },
+  "lifecycle": {
+    "probe_function": "<probe C function name or null>",
+    "remove_function": "<remove C function name or null>",
+    "init_function": "<module/console init C function or null>"
+  },
+  "structs": ["<e.g. platform_driver, uart_ops, amba_driver>"],
+  "register_map": [
+    {
+      "name": "<REGISTER_MACRO_NAME>",
+      "offset": "<0x00>",
+      "offset_expression": "<C offset expression if computed, else null>",
+      "width": 32,
+      "access": "<RW | RO | WO | R | W | W1C | UNKNOWN>",
+      "reset_value": "<0x0 or null>",
+      "description": "<Register purpose>",
+      "bitfields": [
+        {
+          "name": "<BITFIELD_MACRO_NAME>",
+          "bits": "<e.g. 0 or 7:4>",
+          "mask_macro": "<e.g. BIT(0) or 0x01>",
+          "description": "<Bitfield behavior>"
+        }
+      ]
+    }
+  ],
+  "init_sequence": [
+    {
+      "step": 1,
+      "operation": "<MMIO Map | Hardware Reset | Write Register | Read & Poll | Read Register | Memory Allocate | DMA Setup | Interrupt Hook | Clock/Reset Control | Register Device | Other>",
+      "source_function": "<C function name>",
+      "target_register": "<REGISTER_MACRO_NAME or null>",
+      "offset": "<0x00 or null>",
+      "value_or_mask": "<Written value/mask or null>",
+      "poll_condition": "<Exit condition for Read & Poll, else null>",
+      "description": "<What this step does on hardware>"
+    }
+  ],
+  "runtime_operations": {
+    "probe_handler": "<probe C function name or null>",
+    "remove_handler": "<remove C function name or null>",
+    "read_handlers": [
+      {
+        "operation_name": "<e.g. rx_chars>",
+        "c_function": "<C function>",
+        "registers_touched": ["<REG_NAME>"],
+        "description": "<Handler summary>"
+      }
+    ],
+    "write_handlers": [
+      {
+        "operation_name": "<e.g. start_tx>",
+        "c_function": "<C function>",
+        "registers_touched": ["<REG_NAME>"],
+        "description": "<Handler summary>"
+      }
+    ],
+    "transmit_handler": null,
+    "receive_handler": null,
+    "dma_setup": {
+      "allocation_api": "<e.g. dma_alloc_coherent or null>",
+      "address_mask_bits": 64,
+      "descriptor_rings": [],
+      "coherency_notes": "<Barrier/coherency notes or null>"
+    },
+    "interrupt_lifecycle": {
+      "irq_handler": "<top-half ISR C function or null>",
+      "threaded_handler": null,
+      "registration_api": "<e.g. request_irq or devm_request_irq or null>",
+      "irq_flags": ["<e.g. IRQF_SHARED>"],
+      "status_register": "<ISR status register macro or null>",
+      "ack_register": "<ISR ack/clear register macro or null>",
+      "mask_register": "<Interrupt mask register macro or null>",
+      "ack_mechanism": "<e.g. Write-1-to-clear ICR or Read-to-clear>",
+      "flow_steps": [
+        {
+          "step": 1,
+          "operation": "<Read Register | Write Register | Other>",
+          "source_function": "<ISR C function>",
+          "target_register": "<REG_NAME or null>",
+          "offset": "<0x00 or null>",
+          "value_or_mask": "<mask or null>",
+          "description": "<Step description>"
+        }
+      ]
+    }
+  },
+  "concurrency_locks": [
+    {
+      "linux_primitive": "<e.g. spin_lock_irqsave(&port->lock, flags)>",
+      "abstract_lock_type": "<IRQSafeSpinlock | Spinlock | SleepableMutex | ReadWriteLock | Atomic | None>",
+      "protected_resources": ["<Registers or ring buffers>"],
+      "bare_metal_recommendation": "<Bare-metal C++ locking guidance>"
+    }
+  ],
+  "migration_notes": {
+    "linux_to_microkernel_mappings": [
+      {
+        "linux_api": "<e.g. readl / writel>",
+        "microkernel_equivalent": "<e.g. MmioRegion::read32 / write32>",
+        "notes": "<Bare-metal C++ porting note>"
+      }
+    ],
+    "architectural_caveats": ["<Important bare-metal porting caveat>"]
+  }
+}"""
 
 
 def _extract_json_text(raw_output: str) -> str:
@@ -77,7 +211,20 @@ def ground_spec_with_ast(spec: DriverSpec, ast_result: Optional[ASTExtractionRes
             if not bf.bits and bf.mask_macro:
                 bf.bits = infer_bits_from_macro(bf.mask_macro)
 
-    # 2. Backfill metadata from MODULE_* macros if omitted by LLM
+    # 2. If LLM omitted registers that were parsed from AST headers/sources, backfill them deterministically
+    existing_reg_names = {r.name for r in spec.register_map}
+    if not existing_reg_names:
+        for macro in ast_result.macros:
+            if macro.category == "register_offset" and macro.hex_value is not None:
+                spec.register_map.append(
+                    RegisterMap(
+                        name=macro.name,
+                        offset=macro.hex_value,
+                        description=f"Extracted from {macro.file} (#define {macro.name} {macro.value})",
+                    )
+                )
+
+    # 3. Backfill metadata from MODULE_* macros if omitted by LLM
     meta = ast_result.metadata_macros
     if not spec.metadata.license and meta.get("license"):
         spec.metadata.license = meta["license"]
@@ -86,7 +233,7 @@ def ground_spec_with_ast(spec: DriverSpec, ast_result: Optional[ASTExtractionRes
     if not spec.metadata.description and meta.get("description"):
         spec.metadata.description = meta["description"]
 
-    # 3. Backfill structs list from AST-extracted driver structs
+    # 4. Backfill structs list from AST-extracted driver structs
     for s in ast_result.driver_structs:
         if s.struct_type not in spec.structs:
             spec.structs.append(s.struct_type)
@@ -168,7 +315,6 @@ class DriverExtractor:
                 tokenizer=outlines_model.tokenizer,
             )
         except Exception:
-            # Graceful fallback to schema-guided decoding + validation retry loop
             self._outlines_logits_processor = None
 
     def _load_model_and_tokenizer(self) -> tuple[Any, Any]:
@@ -281,7 +427,6 @@ class DriverExtractor:
             except Exception as e:
                 raise ExtractionError(f"Instructor structured extraction failed: {e}") from e
 
-        # OpenAI Structured Outputs (`json_schema`)
         response = client.chat.completions.create(
             model=self.model_name,
             temperature=0.0,
@@ -305,18 +450,18 @@ class DriverExtractor:
     def extract(
         self,
         code_context: str,
-        max_new_tokens: int = 4096,
+        max_new_tokens: int = 8192,
         max_retries: int = 2,
         ast_result: Optional[ASTExtractionResult] = None,
     ) -> DriverSpec:
         """Extracts and validates a DriverSpec from C source code with schema enforcement and retries."""
-        schema_json = json.dumps(DriverSpec.draft_2020_12_schema(), indent=2)
         base_prompt = (
-            f"Analyze the following Linux C driver code and extract the complete hardware and "
-            f"microkernel porting specification.\n\n"
-            f"### Target JSON Schema (Draft 2020-12):\n{schema_json}\n\n"
+            f"Analyze the following Linux C driver code and extract the hardware and bare-metal "
+            f"C++ porting specification as a populated JSON object.\n\n"
+            f"### Required JSON Output Structure (populate with extracted values; do NOT output a JSON Schema):\n"
+            f"{COMPACT_OUTPUT_TEMPLATE}\n\n"
             f"### C Source Code Context:\n{code_context}\n\n"
-            f"### Output:\nProvide only the raw JSON object matching the schema:"
+            f"### Output:\nProvide ONLY the populated JSON object starting with '{{':"
         )
 
         current_prompt = base_prompt
@@ -341,17 +486,24 @@ class DriverExtractor:
 
                 json_payload = _extract_json_text(response_text)
                 last_payload = json_payload
-                spec = DriverSpec.model_validate_json(json_payload)
+
+                parsed_obj = json.loads(json_payload)
+                if isinstance(parsed_obj, dict) and ("$defs" in parsed_obj or "$schema" in parsed_obj):
+                    raise ValueError(
+                        "Output echoed JSON Schema keywords ('$schema'/'$defs') instead of a populated DriverSpec instance."
+                    )
+
+                spec = DriverSpec.model_validate(parsed_obj)
                 return ground_spec_with_ast(spec, ast_result)
 
-            except (ValidationError, json.JSONDecodeError) as e:
+            except (ValidationError, json.JSONDecodeError, ValueError) as e:
                 last_error = e
                 if attempt < max_retries:
                     current_prompt = (
                         f"{base_prompt}\n\n"
-                        f"### PREVIOUS ATTEMPT VALIDATION ERROR:\n"
-                        f"Your previous JSON failed strict schema validation with:\n{e}\n\n"
-                        f"Fix all schema errors and return ONLY the corrected, valid JSON object:"
+                        f"### PREVIOUS ATTEMPT ERROR:\n"
+                        f"Your previous output failed validation:\n{e}\n\n"
+                        f"Keep all descriptions under 8 words and limit bitfields to the top 6 active bits per register so the JSON is not truncated. Emit ONLY a valid, populated DriverSpec JSON data object:"
                     )
             except ExtractionError:
                 raise
@@ -371,7 +523,7 @@ def extract_driver_spec(
     quantization: str = "4bit",
     backend: str = "transformers",
     hf_token: Optional[str] = None,
-    max_new_tokens: int = 4096,
+    max_new_tokens: int = 8192,
     ast_result: Optional[ASTExtractionResult] = None,
     custom_generator: Optional[Callable[[str, str], str]] = None,
 ) -> DriverSpec:

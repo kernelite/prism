@@ -71,6 +71,25 @@ def main() -> None:
     help="Hugging Face API token.",
 )
 @click.option(
+    "--include",
+    "-I",
+    multiple=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="Additional C header file(s) (e.g., include/uapi/linux/virtio_mmio.h) to parse into AST context.",
+)
+@click.option(
+    "--max-tokens",
+    type=int,
+    default=16000,
+    help="Maximum input context token budget before AST function compaction (default: 16000 for 8GB VRAM).",
+)
+@click.option(
+    "--max-new-tokens",
+    type=int,
+    default=8192,
+    help="Maximum output tokens generated for driver_spec.json (default: 8192).",
+)
+@click.option(
     "--no-ast-prune",
     is_flag=True,
     default=False,
@@ -86,6 +105,9 @@ def analyze(
     quant: str,
     device: str,
     token: Optional[str],
+    include: tuple[Path, ...],
+    max_tokens: int,
+    max_new_tokens: int,
     no_ast_prune: bool,
 ) -> None:
     """Analyze a target C driver file or directory and produce machine and human specifications."""
@@ -108,6 +130,8 @@ def analyze(
             code_context, ast_result = aggregate_with_ast(
                 target_path,
                 use_ast_pruning=not no_ast_prune,
+                max_tokens=max_tokens,
+                extra_headers=list(include),
             )
 
         for w in caught_warnings:
@@ -124,7 +148,7 @@ def analyze(
             backend=settings.backend,
             hf_token=settings.hf_token,
         )
-        spec = extractor.extract(code_context=code_context, ast_result=ast_result)
+        spec = extractor.extract(code_context=code_context, max_new_tokens=max_new_tokens, ast_result=ast_result)
 
         md_doc = generate_markdown_spec(spec)
         run_full_verification(spec, ast_result=ast_result, markdown_text=md_doc, strict=False)

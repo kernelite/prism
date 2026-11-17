@@ -320,7 +320,7 @@ class ASTPreProcessor:
             return "bitmask"
         if any(
             prefix in upper_name
-            for prefix in ("REG_", "_REG", "UART_", "VIRTIO_MMIO_", "E1000_", "CSR_", "MMIO_")
+            for prefix in ("REG_", "_REG", "UART_", "UART0", "GIC_", "FW_CFG_", "VIRTIO_", "E1000_", "CSR_", "MMIO_")
         ):
             # Distinguish bitfield masks from register offsets when obvious
             if any(suffix in upper_name for suffix in ("_MASK", "_SHIFT", "_BIT", "_EN", "_ENABLE")):
@@ -725,11 +725,13 @@ class ASTPreProcessor:
         if metadata.get("license"):
             lines.append(f" * Module License: {metadata['license']}")
 
-        reg_macros = [m for m in macros if m.category in {"register_offset", "bitmask"}]
+        offset_macros = [m for m in macros if m.category == "register_offset"]
+        mask_macros = [m for m in macros if m.category == "bitmask"]
+        reg_macros = offset_macros + mask_macros
         if reg_macros:
             lines.append(" *")
             lines.append(" * Extracted Register & Bitmask Macros:")
-            for m in reg_macros[:150]:
+            for m in reg_macros[:250]:
                 hex_note = f"  /* resolved={m.hex_value} */" if m.hex_value else ""
                 lines.append(f" *   #define {m.name} {m.value}{hex_note}")
 
