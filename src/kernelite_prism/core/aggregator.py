@@ -1,9 +1,26 @@
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
+import warnings
 from ..exceptions import AggregationError
 
+# Reserve ~8k tokens for system prompt, JSON schema, and 4096 generated output tokens
+# within Qwen2.5-Coder's 32k context window.
+DEFAULT_TOKEN_WARN_THRESHOLD = 24_000
+CHARS_PER_TOKEN_ESTIMATE = 4
 
-def aggregate_context(target_path: Path) -> str:
+
+def estimate_tokens(text: str) -> int:
+    """Estimates LLM token count using a conservative character-to-token heuristic."""
+    if not text:
+        return 0
+    return max(1, len(text) // CHARS_PER_TOKEN_ESTIMATE)
+
+
+def aggregate_context(
+    target_path: Union[str, Path],
+    warn_token_threshold: int = DEFAULT_TOKEN_WARN_THRESHOLD,
+    max_tokens: Optional[int] = None,
+) -> str:
     """Recursively collects and aggregates C source and header files into a formatted string context."""
     path = Path(target_path)
 
@@ -33,7 +50,6 @@ def aggregate_context(target_path: Path) -> str:
 
     for file_path in files_to_process:
         try:
-            # Read file with UTF-8, falling back gracefully to latin-1
             content = file_path.read_text(encoding="utf-8", errors="replace")
             relative_name = (
                 file_path.relative_to(path)
@@ -52,4 +68,23 @@ def aggregate_context(target_path: Path) -> str:
                 f"Failed to read file '{file_path}': {e}"
             ) from e
 
-    return "\n\n".join(context_blocks)
+    aggregated = "\n\n".join(context_blocks)
+    estimated_tokens = estimate_tokens(aggregated)
+
+    if max_tokens is not None and estimated_tokens > max_tokens:
+        raise AggregationError(
+            f"Aggregated context from '{path}' ({len(files_to_process)} files, "
+            f"~{estimated_tokens:,} tokens) exceeds the configured limit of {max_tokens:,} tokens."
+        )
+
+    if estimated_tokens > warn_token_threshold:
+        warnings.warn(
+            f"Aggregated context from '{path}' spans {len(files_to_process)} file(s) "
+            f"(~{estimated_tokens:,} estimated tokens), exceeding the recommended threshold "
+            f"of {warn_token_threshold:,} tokens. Large multi-file contexts may cause context "
+            f"truncation, degraded accuracy, or GPU OOM errors.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    return aggregated

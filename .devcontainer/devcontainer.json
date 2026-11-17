@@ -5,7 +5,8 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "runArgs": [
-    "--gpus", "all",
+    "--gpus",
+    "all",
     "--ipc=host"
   ],
   "customizations": {
@@ -13,7 +14,9 @@
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
         "python.analysis.typeCheckingMode": "basic",
-        "python.analysis.extraPaths": ["${containerWorkspaceFolder}/src"]
+        "python.analysis.extraPaths": [
+          "${containerWorkspaceFolder}/src"
+        ]
       },
       "extensions": [
         "ms-python.python",
@@ -23,5 +26,5 @@
       ]
     }
   },
-  "postCreateCommand": "pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cu124 && pip install transformers accelerate bitsandbytes pydantic click pyyaml && pip install -e ."
+  "postCreateCommand": "pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cu128 && pip install 'bitsandbytes>=0.45.3' && pip install -e ."
 }

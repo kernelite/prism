@@ -1,11 +1,12 @@
 import sys
+import warnings
 from pathlib import Path
 from typing import Optional
 import click
 
 from .config import DEFAULT_MODEL, get_settings
 from .core.aggregator import aggregate_context
-from .core.extractor import extract_driver_spec
+from .core.extractor import DriverExtractor
 from .core.serializer import serialize_spec
 from .exceptions import KernelitePrismError
 
@@ -44,7 +45,7 @@ def main() -> None:
     "-q",
     type=click.Choice(["4bit", "8bit", "none"], case_sensitive=False),
     default="4bit",
-    help="Quantization precision (default: 4bit).",
+    help="Quantization precision (default: 4bit; use 'none' on CPU).",
 )
 @click.option(
     "--device",
@@ -67,22 +68,32 @@ def analyze(
 ) -> None:
     """Analyze a target C driver file or directory and produce a structured spec."""
     try:
-        settings = get_settings(model=model, device=device, hf_token=token)
+        settings = get_settings(
+            model=model,
+            device=device,
+            quantization=quant,
+            hf_token=token,
+        )
 
         click.echo(f"Aggregating C source context from '{target_path}'...", err=True)
-        code_context = aggregate_context(target_path)
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always", UserWarning)
+            code_context = aggregate_context(target_path)
+
+        for w in caught_warnings:
+            click.echo(f"Warning: {w.message}", err=True)
 
         click.echo(
-            f"Extracting specification on {settings.device} [{quant}] using {settings.model}...",
+            f"Extracting specification on {settings.device} [{settings.quantization}] using {settings.model}...",
             err=True,
         )
-        spec = extract_driver_spec(
-            code_context=code_context,
+        extractor = DriverExtractor(
             model_name=settings.model,
             device=settings.device,
-            quantization=quant,
+            quantization=settings.quantization,
             hf_token=settings.hf_token,
         )
+        spec = extractor.extract(code_context=code_context)
 
         serialized_output = serialize_spec(spec, format_type=output_format)
 

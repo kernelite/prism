@@ -4,38 +4,62 @@ import torch
 from .exceptions import ConfigurationError
 
 # Default to a high-capability open-weights code model
-DEFAULT_MODEL = "Qwen/Qwen2.5-Coder-7B-Instruct"
+DEFAULT_MODEL = "Qwen/Qwen2.5-Coder-3B-Instruct"
+VALID_QUANTIZATIONS = {"4bit", "8bit", "none"}
 
 
 class Settings:
-    """Holds configuration state for local GPU inference and model selection."""
+    """Holds configuration state for local inference and model selection."""
 
     def __init__(
         self,
         model: str = DEFAULT_MODEL,
         device: str = "cuda",
+        quantization: str = "4bit",
         hf_token: Optional[str] = None,
     ):
         self.model: str = model
         self.device: str = device
+        self.quantization: str = quantization.lower()
         self.hf_token: Optional[str] = (
             hf_token or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN")
         )
 
     def validate(self) -> None:
-        if self.device.startswith("cuda") and not torch.cuda.is_available():
+        if self.quantization not in VALID_QUANTIZATIONS:
+            raise ConfigurationError(
+                f"Unsupported quantization '{self.quantization}'. "
+                f"Choose from: {', '.join(sorted(VALID_QUANTIZATIONS))}."
+            )
+
+        is_cuda = self.device.startswith("cuda")
+
+        if is_cuda and not torch.cuda.is_available():
             raise ConfigurationError(
                 f"Device '{self.device}' was requested, but CUDA is not available. "
-                "Ensure an NVIDIA GPU with appropriate CUDA drivers and PyTorch are installed."
+                "Ensure an NVIDIA GPU with appropriate CUDA drivers and PyTorch are installed, "
+                "or pass '--device cpu --quant none'."
+            )
+
+        if not is_cuda and self.quantization != "none":
+            raise ConfigurationError(
+                f"Quantization '{self.quantization}' is only supported on CUDA devices, "
+                f"got device '{self.device}'. Pass '--quant none' for non-CUDA execution."
             )
 
 
 def get_settings(
     model: str = DEFAULT_MODEL,
     device: str = "cuda",
+    quantization: str = "4bit",
     hf_token: Optional[str] = None,
 ) -> Settings:
     """Factory function to fetch and validate settings."""
-    settings = Settings(model=model, device=device, hf_token=hf_token)
+    settings = Settings(
+        model=model,
+        device=device,
+        quantization=quantization,
+        hf_token=hf_token,
+    )
     settings.validate()
     return settings
