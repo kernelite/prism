@@ -1,0 +1,660 @@
+{
+  "device_name": "ARM AMBA Serial Port",
+  "driver_name": "amba_pl011",
+  "compatibility": [
+    "arm,pl011"
+  ],
+  "hardware_info": {
+    "bus_type": "mmio",
+    "compatible_strings": [
+      "arm,pl011"
+    ],
+    "vendor_ids": [],
+    "device_ids": [],
+    "base_address_offsets": [
+      {
+        "region_id": "0",
+        "name": "UART Registers",
+        "base_offset": "0x0",
+        "size_hint": "0x1000",
+        "description": "Contains all UART registers"
+      }
+    ],
+    "endianness": "little",
+    "irq_lines": [
+      "IRQ line 0"
+    ]
+  },
+  "metadata": {
+    "author": "ARM Ltd/Deep Blue Solutions Ltd",
+    "license": "GPL",
+    "description": "ARM AMBA PL011 UART driver",
+    "parameters": []
+  },
+  "matching_tables": {
+    "of_device_id": [
+      {
+        "compatible": "arm,pl011",
+        "raw_entry": {}
+      }
+    ],
+    "pci_device_id": [],
+    "usb_device_id": [],
+    "acpi_device_id": [],
+    "i2c_device_id": [],
+    "spi_device_id": [],
+    "platform_device_id": [],
+    "hid_device_id": []
+  },
+  "interfaces": {
+    "file_operations": {},
+    "sysfs_attributes": [],
+    "procfs_entries": [],
+    "ioctl_commands": []
+  },
+  "lifecycle": {
+    "probe_function": "pl011_probe",
+    "remove_function": "pl011_remove",
+    "init_function": "__init pl011_init"
+  },
+  "structs": [
+    "platform_driver",
+    "uart_ops",
+    "uart_driver",
+    "console",
+    "of_device_id",
+    "acpi_device_id",
+    "amba_driver"
+  ],
+  "register_map": [
+    {
+      "name": "REG_RIS",
+      "offset": "0x00",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Raw Interrupt Status Register",
+      "bitfields": [
+        {
+          "name": "UART011_TXIS",
+          "bits": "0",
+          "mask_macro": "BIT(0)",
+          "description": "Transmit Interrupt Status"
+        },
+        {
+          "name": "UART011_RTIS",
+          "bits": "1",
+          "mask_macro": "BIT(1)",
+          "description": "Receive Timeout Interrupt Status"
+        },
+        {
+          "name": "UART011_RXIS",
+          "bits": "2",
+          "mask_macro": "BIT(2)",
+          "description": "Receive Interrupt Status"
+        },
+        {
+          "name": "UART011_DSRMIS",
+          "bits": "3",
+          "mask_macro": "BIT(3)",
+          "description": "Data Set Ready Masked Interrupt Status"
+        },
+        {
+          "name": "UART011_DCDMIS",
+          "bits": "4",
+          "mask_macro": "BIT(4)",
+          "description": "Data Carrier Detect Masked Interrupt Status"
+        },
+        {
+          "name": "UART011_CTSMIS",
+          "bits": "5",
+          "mask_macro": "BIT(5)",
+          "description": "Clear To Send Masked Interrupt Status"
+        },
+        {
+          "name": "UART011_RIMIS",
+          "bits": "6",
+          "mask_macro": "BIT(6)",
+          "description": "Ring Indicator Masked Interrupt Status"
+        }
+      ]
+    },
+    {
+      "name": "REG_ICR",
+      "offset": "0x04",
+      "width": 32,
+      "access": "WO",
+      "reset_value": "0x0",
+      "description": "Interrupt Clear Register",
+      "bitfields": [
+        {
+          "name": "UART011_OEIS",
+          "bits": "0",
+          "mask_macro": "BIT(0)",
+          "description": "Overrun Error Interrupt Status"
+        },
+        {
+          "name": "UART011_BEIS",
+          "bits": "1",
+          "mask_macro": "BIT(1)",
+          "description": "Break Error Interrupt Status"
+        },
+        {
+          "name": "UART011_PEIS",
+          "bits": "2",
+          "mask_macro": "BIT(2)",
+          "description": "Parity Error Interrupt Status"
+        },
+        {
+          "name": "UART011_FEIS",
+          "bits": "3",
+          "mask_macro": "BIT(3)",
+          "description": "Frame Error Interrupt Status"
+        },
+        {
+          "name": "UART011_RTIS",
+          "bits": "4",
+          "mask_macro": "BIT(4)",
+          "description": "Receive Timeout Interrupt Status"
+        },
+        {
+          "name": "UART011_RXIS",
+          "bits": "5",
+          "mask_macro": "BIT(5)",
+          "description": "Receive Interrupt Status"
+        },
+        {
+          "name": "UART011_DSRMIS",
+          "bits": "6",
+          "mask_macro": "BIT(6)",
+          "description": "Data Set Ready Masked Interrupt Status"
+        },
+        {
+          "name": "UART011_DCDMIS",
+          "bits": "7",
+          "mask_macro": "BIT(7)",
+          "description": "Data Carrier Detect Masked Interrupt Status"
+        },
+        {
+          "name": "UART011_CTSMIS",
+          "bits": "8",
+          "mask_macro": "BIT(8)",
+          "description": "Clear To Send Masked Interrupt Status"
+        },
+        {
+          "name": "UART011_RIMIS",
+          "bits": "9",
+          "mask_macro": "BIT(9)",
+          "description": "Ring Indicator Masked Interrupt Status"
+        }
+      ]
+    },
+    {
+      "name": "REG_IMSC",
+      "offset": "0x08",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Interrupt Mask Set/Clear Register",
+      "bitfields": [
+        {
+          "name": "UART011_TXIM",
+          "bits": "0",
+          "mask_macro": "BIT(0)",
+          "description": "Transmit Interrupt Mask"
+        },
+        {
+          "name": "UART011_RTIM",
+          "bits": "1",
+          "mask_macro": "BIT(1)",
+          "description": "Receive Timeout Interrupt Mask"
+        },
+        {
+          "name": "UART011_RXIM",
+          "bits": "2",
+          "mask_macro": "BIT(2)",
+          "description": "Receive Interrupt Mask"
+        },
+        {
+          "name": "UART011_DSRMIM",
+          "bits": "3",
+          "mask_macro": "BIT(3)",
+          "description": "Data Set Ready Masked Interrupt Mask"
+        },
+        {
+          "name": "UART011_DCDMIM",
+          "bits": "4",
+          "mask_macro": "BIT(4)",
+          "description": "Data Carrier Detect Masked Interrupt Mask"
+        },
+        {
+          "name": "UART011_CTSMIM",
+          "bits": "5",
+          "mask_macro": "BIT(5)",
+          "description": "Clear To Send Masked Interrupt Mask"
+        },
+        {
+          "name": "UART011_RIMIM",
+          "bits": "6",
+          "mask_macro": "BIT(6)",
+          "description": "Ring Indicator Masked Interrupt Mask"
+        }
+      ]
+    },
+    {
+      "name": "REG_FR",
+      "offset": "0x0c",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Flag Register",
+      "bitfields": [
+        {
+          "name": "UART01x_FR_TXFF",
+          "bits": "0",
+          "mask_macro": "BIT(0)",
+          "description": "Transmit FIFO Full"
+        },
+        {
+          "name": "UART01x_FR_RXFE",
+          "bits": "1",
+          "mask_macro": "BIT(1)",
+          "description": "Receive FIFO Empty"
+        },
+        {
+          "name": "UART01x_FR_BUSY",
+          "bits": "2",
+          "mask_macro": "BIT(2)",
+          "description": "Busy Flag"
+        },
+        {
+          "name": "UART01x_FR_CTS",
+          "bits": "3",
+          "mask_macro": "BIT(3)",
+          "description": "Clear To Send"
+        },
+        {
+          "name": "UART01x_FR_DSR",
+          "bits": "4",
+          "mask_macro": "BIT(4)",
+          "description": "Data Set Ready"
+        },
+        {
+          "name": "UART01x_FR_DCD",
+          "bits": "5",
+          "mask_macro": "BIT(5)",
+          "description": "Data Carrier Detect"
+        },
+        {
+          "name": "UART01x_FR_RI",
+          "bits": "6",
+          "mask_macro": "BIT(6)",
+          "description": "Ring Indicator"
+        },
+        {
+          "name": "UART01x_FR_OE",
+          "bits": "7",
+          "mask_macro": "BIT(7)",
+          "description": "Overrun Error"
+        },
+        {
+          "name": "UART01x_FR_BE",
+          "bits": "8",
+          "mask_macro": "BIT(8)",
+          "description": "Break Error"
+        },
+        {
+          "name": "UART01x_FR_PE",
+          "bits": "9",
+          "mask_macro": "BIT(9)",
+          "description": "Parity Error"
+        },
+        {
+          "name": "UART01x_FR_FE",
+          "bits": "10",
+          "mask_macro": "BIT(10)",
+          "description": "Frame Error"
+        },
+        {
+          "name": "UART01x_FR_RI",
+          "bits": "11",
+          "mask_macro": "BIT(11)",
+          "description": "Ring Indicator"
+        }
+      ]
+    },
+    {
+      "name": "REG_LCRH",
+      "offset": "0x10",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Line Control Register",
+      "bitfields": [
+        {
+          "name": "UART01x_LCRH_WLEN",
+          "bits": "0:1",
+          "mask_macro": "0x3",
+          "description": "Word Length"
+        },
+        {
+          "name": "UART01x_LCRH_STP2",
+          "bits": "2",
+          "mask_macro": "BIT(2)",
+          "description": "Two Stop Bits"
+        },
+        {
+          "name": "UART01x_LCRH_PEN",
+          "bits": "3",
+          "mask_macro": "BIT(3)",
+          "description": "Parity Enable"
+        },
+        {
+          "name": "UART01x_LCRH_EPS",
+          "bits": "4",
+          "mask_macro": "BIT(4)",
+          "description": "Even Parity"
+        },
+        {
+          "name": "UART01x_LCRH_SPS",
+          "bits": "5",
+          "mask_macro": "BIT(5)",
+          "description": "Stick Parity Select"
+        },
+        {
+          "name": "UART01x_LCRH_FEN",
+          "bits": "6",
+          "mask_macro": "BIT(6)",
+          "description": "Enable FIFOs"
+        }
+      ]
+    },
+    {
+      "name": "REG_IBRD",
+      "offset": "0x14",
+      "width": 16,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Integer Baud Rate Divisor",
+      "bitfields": [
+        {
+          "name": "IBRD",
+          "bits": "0:15",
+          "mask_macro": "0xffff",
+          "description": "Integer Baud Rate Divisor"
+        }
+      ]
+    },
+    {
+      "name": "REG_FBRD",
+      "offset": "0x18",
+      "width": 16,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Fractional Baud Rate Divisor",
+      "bitfields": [
+        {
+          "name": "FBRD",
+          "bits": "0:15",
+          "mask_macro": "0xffff",
+          "description": "Fractional Baud Rate Divisor"
+        }
+      ]
+    },
+    {
+      "name": "REG_CR",
+      "offset": "0x1c",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Control Register",
+      "bitfields": [
+        {
+          "name": "UART011_CR_RTS",
+          "bits": "0",
+          "mask_macro": "BIT(0)",
+          "description": "Request To Send"
+        },
+        {
+          "name": "UART011_CR_DTR",
+          "bits": "1",
+          "mask_macro": "BIT(1)",
+          "description": "Data Terminal Ready"
+        },
+        {
+          "name": "UART011_CR_CTSEN",
+          "bits": "2",
+          "mask_macro": "BIT(2)",
+          "description": "Clear To Send Enable"
+        },
+        {
+          "name": "UART011_CR_RTSEN",
+          "bits": "3",
+          "mask_macro": "BIT(3)",
+          "description": "Request To Send Enable"
+        },
+        {
+          "name": "UART011_CR_RXE",
+          "bits": "4",
+          "mask_macro": "BIT(4)",
+          "description": "Receiver Enable"
+        },
+        {
+          "name": "UART011_CR_TXE",
+          "bits": "5",
+          "mask_macro": "BIT(5)",
+          "description": "Transmitter Enable"
+        },
+        {
+          "name": "UART011_CR_UARTEN",
+          "bits": "6",
+          "mask_macro": "BIT(6)",
+          "description": "UART Enable"
+        },
+        {
+          "name": "UART011_CR_OVER",
+          "bits": "7",
+          "mask_macro": "BIT(7)",
+          "description": "Over Sampling Mode"
+        },
+        {
+          "name": "UART011_CR_OVSFACT",
+          "bits": "8",
+          "mask_macro": "BIT(8)",
+          "description": "Oversampling Factor"
+        }
+      ]
+    },
+    {
+      "name": "REG_IFLS",
+      "offset": "0x20",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Interrupt FIFO Level Select Register",
+      "bitfields": [
+        {
+          "name": "UART011_IFLS_RX",
+          "bits": "0:2",
+          "mask_macro": "0x7",
+          "description": "Receive FIFO Level Select"
+        },
+        {
+          "name": "UART011_IFLS_TX",
+          "bits": "3:5",
+          "mask_macro": "0x7",
+          "description": "Transmit FIFO Level Select"
+        }
+      ]
+    }
+  ],
+  "init_sequence": [
+    {
+      "step": 1,
+      "operation": "MMIO Map",
+      "source_function": "devm_ioremap_resource",
+      "target_register": "REG_RIS",
+      "offset": "0x00",
+      "description": "Map UART registers to memory"
+    },
+    {
+      "step": 2,
+      "operation": "Hardware Reset",
+      "source_function": "clk_prepare_enable",
+      "target_register": "REG_CR",
+      "offset": "0x1c",
+      "value_or_mask": "0x0",
+      "description": "Reset UART by disabling all features"
+    },
+    {
+      "step": 3,
+      "operation": "Write Register",
+      "source_function": "pl011_write",
+      "target_register": "REG_CR",
+      "offset": "0x1c",
+      "value_or_mask": "0x0",
+      "description": "Disable UART"
+    },
+    {
+      "step": 4,
+      "operation": "Read & Poll",
+      "source_function": "pl011_read",
+      "target_register": "REG_FR",
+      "offset": "0x0c",
+      "value_or_mask": "0x0",
+      "poll_condition": "pl011_read(uap, REG_FR) & UART01x_FR_BUSY",
+      "description": "Wait for UART to be ready"
+    },
+    {
+      "step": 5,
+      "operation": "Read Register",
+      "source_function": "pl011_read",
+      "target_register": "REG_CR",
+      "offset": "0x1c",
+      "value_or_mask": "0x0",
+      "description": "Disable UART"
+    },
+    {
+      "step": 6,
+      "operation": "Memory Allocate",
+      "source_function": "devm_kzalloc",
+      "target_register": "uap",
+      "offset": "0x0",
+      "value_or_mask": "sizeof(struct uart_amba_port)",
+      "description": "Allocate memory for UART port structure"
+    },
+    {
+      "step": 7,
+      "operation": "DMA Setup",
+      "source_function": "pl011_dma_startup",
+      "target_register": "uap",
+      "offset": "0x0",
+      "description": "Initialize DMA for UART"
+    },
+    {
+      "step": 8,
+      "operation": "Interrupt Hook",
+      "source_function": "request_irq",
+      "target_register": "uap->port.irq",
+      "offset": "0x0",
+      "value_or_mask": "pl011_int",
+      "description": "Hook interrupt handler"
+    },
+    {
+      "step": 9,
+      "operation": "Register Device",
+      "source_function": "uart_register_port",
+      "target_register": "uap",
+      "offset": "0x0",
+      "description": "Register UART device"
+    }
+  ],
+  "runtime_operations": {
+    "probe_handler": "pl011_probe",
+    "remove_handler": "pl011_remove",
+    "read_handlers": [
+      {
+        "operation_name": "rx_chars",
+        "c_function": "pl011_rx_chars",
+        "registers_touched": [
+          "REG_RIS",
+          "REG_ICR",
+          "REG_FR",
+          "REG_DR"
+        ],
+        "description": "Read characters from UART FIFO"
+      }
+    ],
+    "write_handlers": [
+      {
+        "operation_name": "start_tx",
+        "c_function": "pl011_start_tx",
+        "registers_touched": [
+          "REG_CR",
+          "REG_LCRH",
+          "REG_IBRD",
+          "REG_FBRD",
+          "REG_IMSC"
+        ],
+        "description": "Start transmitting characters"
+      }
+    ],
+    "dma_setup": {
+      "allocation_api": "devm_dma_alloc_coherent",
+      "address_mask_bits": 64,
+      "descriptor_rings": [],
+      "coherency_notes": "Barrier/coherency notes or null"
+    },
+    "interrupt_lifecycle": {
+      "irq_handler": "pl011_int",
+      "registration_api": "request_irq",
+      "irq_flags": [
+        "IRQF_SHARED"
+      ],
+      "status_register": "REG_RIS",
+      "ack_register": "REG_ICR",
+      "mask_register": "REG_IMSC",
+      "ack_mechanism": "Write-1-to-clear ICR",
+      "flow_steps": [
+        {
+          "step": 1,
+          "operation": "Read Register",
+          "source_function": "pl011_read",
+          "target_register": "REG_RIS",
+          "offset": "0x00",
+          "description": "Read interrupt status"
+        },
+        {
+          "step": 2,
+          "operation": "Write Register",
+          "source_function": "pl011_write",
+          "target_register": "REG_ICR",
+          "offset": "0x04",
+          "description": "Clear interrupt status"
+        }
+      ]
+    }
+  },
+  "concurrency_locks": [
+    {
+      "linux_primitive": "spin_lock_irqsave(&port->lock, flags)",
+      "abstract_lock_type": "IRQSafeSpinlock",
+      "protected_resources": [
+        "uap->port"
+      ],
+      "bare_metal_recommendation": "Use a hardware-specific IRQ-safe spinlock"
+    }
+  ],
+  "migration_notes": {
+    "linux_to_microkernel_mappings": [
+      {
+        "linux_api": "readl / writel",
+        "microkernel_equivalent": "MmioRegion::read32 / write32",
+        "notes": "Use MMIO functions to access UART registers"
+      }
+    ],
+    "architectural_caveats": [
+      "Ensure proper handling of interrupts and DMA operations"
+    ]
+  }
+}

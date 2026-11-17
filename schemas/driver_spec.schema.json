@@ -1,0 +1,1309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kernelite.dev/schemas/driver_spec.schema.json",
+  "$defs": {
+    "ApiMigrationMapping": {
+      "properties": {
+        "linux_api": {
+          "description": "Linux kernel function/macro (e.g., 'writel', 'devm_request_irq')",
+          "title": "Linux Api",
+          "type": "string"
+        },
+        "microkernel_equivalent": {
+          "description": "Bare-metal C++ microkernel primitive (e.g., 'MmioRegion::write32', 'IrqDispatcher::bind')",
+          "title": "Microkernel Equivalent",
+          "type": "string"
+        },
+        "notes": {
+          "description": "Semantics, memory barriers, or ownership caveats",
+          "title": "Notes",
+          "type": "string"
+        }
+      },
+      "required": [
+        "linux_api",
+        "microkernel_equivalent",
+        "notes"
+      ],
+      "title": "ApiMigrationMapping",
+      "type": "object"
+    },
+    "BaseAddressRegion": {
+      "properties": {
+        "region_id": {
+          "description": "BAR index, MMIO resource index, or I/O port base identifier",
+          "title": "Region Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Logical name of the memory/IO region",
+          "title": "Name"
+        },
+        "base_offset": {
+          "default": "0x0",
+          "description": "Base address offset or BAR selector",
+          "title": "Base Offset",
+          "type": "string"
+        },
+        "size_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Region byte size or address span if known",
+          "title": "Size Hint"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        }
+      },
+      "required": [
+        "region_id"
+      ],
+      "title": "BaseAddressRegion",
+      "type": "object"
+    },
+    "Bitfield": {
+      "properties": {
+        "name": {
+          "description": "C macro or logical identifier for the bitfield",
+          "title": "Name",
+          "type": "string"
+        },
+        "bits": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bit index or inclusive MSB:LSB range (e.g., '3' or '7:4')",
+          "title": "Bits"
+        },
+        "mask_macro": {
+          "description": "Raw C bitmask expression or hex mask (e.g., 'BIT(3)', 'GENMASK(7, 4)', '0x08')",
+          "title": "Mask Macro",
+          "type": "string"
+        },
+        "access": {
+          "anyOf": [
+            {
+              "enum": [
+                "RW",
+                "RO",
+                "WO",
+                "R",
+                "W",
+                "W1C",
+                "UNKNOWN"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bitfield-level access permissions if distinct from parent register",
+          "title": "Access"
+        },
+        "reset_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Default hardware reset value for this bitfield (e.g., '0x0')",
+          "title": "Reset Value"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hardware behavior controlled by this bitfield",
+          "title": "Description"
+        }
+      },
+      "required": [
+        "name",
+        "mask_macro"
+      ],
+      "title": "Bitfield",
+      "type": "object"
+    },
+    "ConcurrencyLock": {
+      "properties": {
+        "linux_primitive": {
+          "description": "Original Linux lock declaration or call (e.g., 'spin_lock_irqsave')",
+          "title": "Linux Primitive",
+          "type": "string"
+        },
+        "abstract_lock_type": {
+          "description": "Normalized hardware/OS concurrency primitive",
+          "enum": [
+            "IRQSafeSpinlock",
+            "Spinlock",
+            "SleepableMutex",
+            "ReadWriteLock",
+            "Atomic",
+            "None"
+          ],
+          "title": "Abstract Lock Type",
+          "type": "string"
+        },
+        "protected_resources": {
+          "description": "Registers, rings, or driver state protected by this lock",
+          "items": {
+            "type": "string"
+          },
+          "title": "Protected Resources",
+          "type": "array"
+        },
+        "bare_metal_recommendation": {
+          "description": "Recommended bare-metal C++ synchronization implementation",
+          "title": "Bare Metal Recommendation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "linux_primitive",
+        "abstract_lock_type",
+        "bare_metal_recommendation"
+      ],
+      "title": "ConcurrencyLock",
+      "type": "object"
+    },
+    "DMASpec": {
+      "properties": {
+        "allocation_api": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Linux DMA allocation API used (e.g., 'dma_alloc_coherent')",
+          "title": "Allocation Api"
+        },
+        "address_mask_bits": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "DMA addressing bit width (e.g., 32 or 64)",
+          "title": "Address Mask Bits"
+        },
+        "descriptor_rings": {
+          "description": "TX/RX descriptor ring structures and base/head/tail registers",
+          "items": {
+            "type": "string"
+          },
+          "title": "Descriptor Rings",
+          "type": "array"
+        },
+        "coherency_notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Memory barrier (`wmb`/`rmb`) and cache coherency requirements",
+          "title": "Coherency Notes"
+        }
+      },
+      "title": "DMASpec",
+      "type": "object"
+    },
+    "DeviceMatch": {
+      "properties": {
+        "compatible": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compatible"
+        },
+        "vendor_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vendor Id"
+        },
+        "device_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Id"
+        },
+        "raw_entry": {
+          "additionalProperties": true,
+          "title": "Raw Entry",
+          "type": "object"
+        }
+      },
+      "title": "DeviceMatch",
+      "type": "object"
+    },
+    "DriverInterfaces": {
+      "properties": {
+        "file_operations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Mapping of file_operations struct fields (e.g., 'unlocked_ioctl', 'read') to C function names",
+          "title": "File Operations",
+          "type": "object"
+        },
+        "sysfs_attributes": {
+          "items": {
+            "$ref": "#/$defs/SysfsAttribute"
+          },
+          "title": "Sysfs Attributes",
+          "type": "array"
+        },
+        "procfs_entries": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Procfs Entries",
+          "type": "array"
+        },
+        "ioctl_commands": {
+          "items": {
+            "$ref": "#/$defs/IoctlCommand"
+          },
+          "title": "Ioctl Commands",
+          "type": "array"
+        }
+      },
+      "title": "DriverInterfaces",
+      "type": "object"
+    },
+    "DriverLifecycle": {
+      "properties": {
+        "probe_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Probe Function"
+        },
+        "remove_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remove Function"
+        },
+        "shutdown_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shutdown Function"
+        },
+        "suspend_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suspend Function"
+        },
+        "resume_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resume Function"
+        },
+        "runtime_suspend_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Suspend Function"
+        },
+        "runtime_resume_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Resume Function"
+        },
+        "init_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Init Function"
+        },
+        "exit_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exit Function"
+        }
+      },
+      "title": "DriverLifecycle",
+      "type": "object"
+    },
+    "DriverMetadata": {
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "License"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/$defs/ModuleParam"
+          },
+          "title": "Parameters",
+          "type": "array"
+        }
+      },
+      "title": "DriverMetadata",
+      "type": "object"
+    },
+    "HardwareInfo": {
+      "properties": {
+        "bus_type": {
+          "default": "mmio",
+          "description": "Primary hardware interconnect bus type",
+          "enum": [
+            "mmio",
+            "pci",
+            "platform",
+            "i2c",
+            "spi",
+            "usb",
+            "uart",
+            "other"
+          ],
+          "title": "Bus Type",
+          "type": "string"
+        },
+        "compatible_strings": {
+          "description": "Device Tree (DTB) compatible strings",
+          "items": {
+            "type": "string"
+          },
+          "title": "Compatible Strings",
+          "type": "array"
+        },
+        "vendor_ids": {
+          "description": "PCI/USB vendor IDs in hex",
+          "items": {
+            "type": "string"
+          },
+          "title": "Vendor Ids",
+          "type": "array"
+        },
+        "device_ids": {
+          "description": "PCI/USB device IDs in hex",
+          "items": {
+            "type": "string"
+          },
+          "title": "Device Ids",
+          "type": "array"
+        },
+        "base_address_offsets": {
+          "description": "MMIO BARs or platform memory resource regions",
+          "items": {
+            "$ref": "#/$defs/BaseAddressRegion"
+          },
+          "title": "Base Address Offsets",
+          "type": "array"
+        },
+        "endianness": {
+          "default": "little",
+          "description": "Hardware register byte ordering",
+          "enum": [
+            "little",
+            "big",
+            "configurable",
+            "unknown"
+          ],
+          "title": "Endianness",
+          "type": "string"
+        },
+        "irq_lines": {
+          "description": "Interrupt vectors or IRQ trigger modes",
+          "items": {
+            "type": "string"
+          },
+          "title": "Irq Lines",
+          "type": "array"
+        }
+      },
+      "title": "HardwareInfo",
+      "type": "object"
+    },
+    "InterruptLifecycle": {
+      "properties": {
+        "irq_handler": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Primary top-half ISR C function name",
+          "title": "Irq Handler"
+        },
+        "threaded_handler": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bottom-half / NAPI poll / threaded ISR",
+          "title": "Threaded Handler"
+        },
+        "registration_api": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "e.g., 'request_irq', 'devm_request_irq'",
+          "title": "Registration Api"
+        },
+        "irq_flags": {
+          "description": "e.g., ['IRQF_SHARED']",
+          "items": {
+            "type": "string"
+          },
+          "title": "Irq Flags",
+          "type": "array"
+        },
+        "status_register": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Register read to determine active interrupt causes",
+          "title": "Status Register"
+        },
+        "ack_register": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Register read or written to acknowledge/clear pending interrupts",
+          "title": "Ack Register"
+        },
+        "mask_register": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Register used to enable/disable hardware interrupt masks",
+          "title": "Mask Register"
+        },
+        "ack_mechanism": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hardware acknowledgment behavior (e.g., 'Read-to-clear ICR', 'Write-1-to-clear INTERRUPT_ACK')",
+          "title": "Ack Mechanism"
+        },
+        "flow_steps": {
+          "description": "Ordered steps executed during interrupt handling",
+          "items": {
+            "$ref": "#/$defs/SequenceStep"
+          },
+          "title": "Flow Steps",
+          "type": "array"
+        }
+      },
+      "title": "InterruptLifecycle",
+      "type": "object"
+    },
+    "IoctlCommand": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "dir": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dir"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "nr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nr"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "IoctlCommand",
+      "type": "object"
+    },
+    "MatchingTables": {
+      "properties": {
+        "of_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "Of Device Id",
+          "type": "array"
+        },
+        "pci_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "Pci Device Id",
+          "type": "array"
+        },
+        "usb_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "Usb Device Id",
+          "type": "array"
+        },
+        "acpi_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "Acpi Device Id",
+          "type": "array"
+        },
+        "i2c_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "I2C Device Id",
+          "type": "array"
+        },
+        "spi_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "Spi Device Id",
+          "type": "array"
+        },
+        "platform_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "Platform Device Id",
+          "type": "array"
+        },
+        "hid_device_id": {
+          "items": {
+            "$ref": "#/$defs/DeviceMatch"
+          },
+          "title": "Hid Device Id",
+          "type": "array"
+        }
+      },
+      "title": "MatchingTables",
+      "type": "object"
+    },
+    "MigrationNotes": {
+      "properties": {
+        "linux_to_microkernel_mappings": {
+          "items": {
+            "$ref": "#/$defs/ApiMigrationMapping"
+          },
+          "title": "Linux To Microkernel Mappings",
+          "type": "array"
+        },
+        "architectural_caveats": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Architectural Caveats",
+          "type": "array"
+        }
+      },
+      "title": "MigrationNotes",
+      "type": "object"
+    },
+    "ModuleParam": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "permissions": {
+          "title": "Permissions",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "permissions"
+      ],
+      "title": "ModuleParam",
+      "type": "object"
+    },
+    "RegisterMap": {
+      "properties": {
+        "name": {
+          "description": "Register macro name from C header/source (e.g., 'E1000_CTRL')",
+          "title": "Name",
+          "type": "string"
+        },
+        "offset": {
+          "description": "Hexadecimal byte offset from MMIO/BAR base (e.g., '0x0000')",
+          "title": "Offset",
+          "type": "string"
+        },
+        "offset_expression": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Isolated C offset calculation formula if indexed/computed (e.g., '0x03800 + (i * 0x100)')",
+          "title": "Offset Expression"
+        },
+        "width": {
+          "default": 32,
+          "description": "Register bit width (8, 16, 32, 64, 128, 256)",
+          "maximum": 512,
+          "minimum": 8,
+          "title": "Width",
+          "type": "integer"
+        },
+        "access": {
+          "default": "RW",
+          "description": "Register access mode: RW, RO, WO, R, W, W1C, or UNKNOWN",
+          "enum": [
+            "RW",
+            "RO",
+            "WO",
+            "R",
+            "W",
+            "W1C",
+            "UNKNOWN"
+          ],
+          "title": "Access",
+          "type": "string"
+        },
+        "reset_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hardware power-on reset value in hex (e.g., '0x00000000')",
+          "title": "Reset Value"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Functional description of the hardware register",
+          "title": "Description"
+        },
+        "bitfields": {
+          "items": {
+            "$ref": "#/$defs/Bitfield"
+          },
+          "title": "Bitfields",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "offset"
+      ],
+      "title": "RegisterMap",
+      "type": "object"
+    },
+    "RuntimeOpMapping": {
+      "properties": {
+        "operation_name": {
+          "description": "Logical operation (e.g., 'transmit', 'read', 'set_termios')",
+          "title": "Operation Name",
+          "type": "string"
+        },
+        "c_function": {
+          "description": "Linux C callback implementation name",
+          "title": "C Function",
+          "type": "string"
+        },
+        "registers_touched": {
+          "description": "Register macros read or written during this operation",
+          "items": {
+            "type": "string"
+          },
+          "title": "Registers Touched",
+          "type": "array"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        }
+      },
+      "required": [
+        "operation_name",
+        "c_function"
+      ],
+      "title": "RuntimeOpMapping",
+      "type": "object"
+    },
+    "RuntimeOperations": {
+      "properties": {
+        "probe_handler": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Probe Handler"
+        },
+        "remove_handler": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remove Handler"
+        },
+        "read_handlers": {
+          "items": {
+            "$ref": "#/$defs/RuntimeOpMapping"
+          },
+          "title": "Read Handlers",
+          "type": "array"
+        },
+        "write_handlers": {
+          "items": {
+            "$ref": "#/$defs/RuntimeOpMapping"
+          },
+          "title": "Write Handlers",
+          "type": "array"
+        },
+        "transmit_handler": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RuntimeOpMapping"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "receive_handler": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RuntimeOpMapping"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dma_setup": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DMASpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "interrupt_lifecycle": {
+          "$ref": "#/$defs/InterruptLifecycle"
+        }
+      },
+      "title": "RuntimeOperations",
+      "type": "object"
+    },
+    "SequenceStep": {
+      "properties": {
+        "step": {
+          "description": "1-based chronological order of execution",
+          "minimum": 1,
+          "title": "Step",
+          "type": "integer"
+        },
+        "operation": {
+          "description": "Categorized hardware or driver initialization operation",
+          "enum": [
+            "Write Register",
+            "Read & Poll",
+            "Read Register",
+            "Memory Allocate",
+            "MMIO Map",
+            "DMA Setup",
+            "Interrupt Hook",
+            "Clock/Reset Control",
+            "Hardware Reset",
+            "Register Device",
+            "Lock Acquire",
+            "Lock Release",
+            "Other"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "source_function": {
+          "description": "Originating C function name (e.g., 'e1000_probe')",
+          "title": "Source Function",
+          "type": "string"
+        },
+        "target_register": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Target register macro name or hardware resource",
+          "title": "Target Register"
+        },
+        "offset": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hexadecimal register offset if applicable",
+          "title": "Offset"
+        },
+        "value_or_mask": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Written constant/bitmask, poll mask, DMA size, or IRQ flags",
+          "title": "Value Or Mask"
+        },
+        "poll_condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Exit condition and timeout for 'Read & Poll' steps",
+          "title": "Poll Condition"
+        },
+        "description": {
+          "description": "Detailed explanation of what this step performs on hardware",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step",
+        "operation",
+        "source_function",
+        "description"
+      ],
+      "title": "SequenceStep",
+      "type": "object"
+    },
+    "SysfsAttribute": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "mode": {
+          "title": "Mode",
+          "type": "string"
+        },
+        "show_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Show Function"
+        },
+        "store_function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Store Function"
+        }
+      },
+      "required": [
+        "name",
+        "mode"
+      ],
+      "title": "SysfsAttribute",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "device_name": {
+      "default": "",
+      "description": "Human-readable hardware controller or peripheral name",
+      "title": "Device Name",
+      "type": "string"
+    },
+    "driver_name": {
+      "description": "Canonical name of the Linux driver module",
+      "title": "Driver Name",
+      "type": "string"
+    },
+    "compatibility": {
+      "description": "Compatible DTB strings or hardware matching identifiers",
+      "items": {
+        "type": "string"
+      },
+      "title": "Compatibility",
+      "type": "array"
+    },
+    "hardware_info": {
+      "$ref": "#/$defs/HardwareInfo",
+      "description": "Bus, compatible strings, vendor/device IDs, and MMIO base regions"
+    },
+    "metadata": {
+      "$ref": "#/$defs/DriverMetadata"
+    },
+    "matching_tables": {
+      "$ref": "#/$defs/MatchingTables"
+    },
+    "interfaces": {
+      "$ref": "#/$defs/DriverInterfaces"
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/DriverLifecycle"
+    },
+    "structs": {
+      "description": "List of driver structs defined (e.g., 'platform_driver', 'pci_driver')",
+      "items": {
+        "type": "string"
+      },
+      "title": "Structs",
+      "type": "array"
+    },
+    "register_map": {
+      "description": "Strictly typed hardware register map with offsets, access modes, and bitfields",
+      "items": {
+        "$ref": "#/$defs/RegisterMap"
+      },
+      "title": "Register Map",
+      "type": "array"
+    },
+    "init_sequence": {
+      "description": "Chronologically ordered probe and hardware initialization sequence",
+      "items": {
+        "$ref": "#/$defs/SequenceStep"
+      },
+      "title": "Init Sequence",
+      "type": "array"
+    },
+    "runtime_operations": {
+      "$ref": "#/$defs/RuntimeOperations",
+      "description": "Runtime I/O handlers, DMA configuration, and interrupt lifecycle"
+    },
+    "concurrency_locks": {
+      "description": "Linux spinlocks/mutexes translated into abstract concurrency locks",
+      "items": {
+        "$ref": "#/$defs/ConcurrencyLock"
+      },
+      "title": "Concurrency Locks",
+      "type": "array"
+    },
+    "migration_notes": {
+      "$ref": "#/$defs/MigrationNotes",
+      "description": "Guidance for porting the driver to a bare-metal C++ microkernel"
+    }
+  },
+  "required": [
+    "driver_name"
+  ],
+  "title": "DriverSpec",
+  "type": "object"
+}

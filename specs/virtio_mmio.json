@@ -1,0 +1,669 @@
+{
+  "device_name": "Virtio MMIO Controller",
+  "driver_name": "virtio_mmio",
+  "compatibility": [
+    "virtio,mmio"
+  ],
+  "hardware_info": {
+    "bus_type": "mmio",
+    "compatible_strings": [
+      "virtio,mmio"
+    ],
+    "vendor_ids": [],
+    "device_ids": [],
+    "base_address_offsets": [
+      {
+        "region_id": "0",
+        "name": "MMIO Region",
+        "base_offset": "0x0",
+        "size_hint": "0x1000",
+        "description": "Memory-mapped I/O region for Virtio MMIO"
+      }
+    ],
+    "endianness": "little",
+    "irq_lines": [
+      "Single interrupt line"
+    ]
+  },
+  "metadata": {
+    "author": "Pawel Moll <pawel.moll@arm.com>",
+    "license": "GPL",
+    "description": "Platform bus driver for memory mapped virtio devices",
+    "parameters": []
+  },
+  "matching_tables": {
+    "of_device_id": [
+      {
+        "compatible": "virtio,mmio",
+        "raw_entry": {}
+      }
+    ],
+    "pci_device_id": [],
+    "usb_device_id": [],
+    "acpi_device_id": [],
+    "i2c_device_id": [],
+    "spi_device_id": [],
+    "platform_device_id": [],
+    "hid_device_id": []
+  },
+  "interfaces": {
+    "file_operations": {},
+    "sysfs_attributes": [],
+    "procfs_entries": [],
+    "ioctl_commands": []
+  },
+  "lifecycle": {
+    "probe_function": "virtio_mmio_probe",
+    "remove_function": "virtio_mmio_remove",
+    "init_function": "__init virtio_mmio_init"
+  },
+  "structs": [
+    "platform_driver",
+    "of_device_id",
+    "acpi_device_id"
+  ],
+  "register_map": [
+    {
+      "name": "VIRTIO_MMIO_MAGIC_VALUE",
+      "offset": "0x0",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Magic value to identify the device",
+      "bitfields": [
+        {
+          "name": "VIRTIO_MAGIC_VALUE",
+          "bits": "0",
+          "mask_macro": "0x00000000",
+          "description": "Magic value for identification"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_VERSION",
+      "offset": "0x4",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Device version",
+      "bitfields": [
+        {
+          "name": "VIRTIO_VERSION",
+          "bits": "0:7",
+          "mask_macro": "0x000000ff",
+          "description": "Device version number"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_VENDOR_ID",
+      "offset": "0xc",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Vendor ID",
+      "bitfields": [
+        {
+          "name": "VIRTIO_VENDOR_ID",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Vendor ID for the device"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_DEVICE_ID",
+      "offset": "0x8",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Device ID",
+      "bitfields": [
+        {
+          "name": "VIRTIO_DEVICE_ID",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Device ID for the device"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_SEL",
+      "offset": "0x30",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Select a specific queue",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_SEL",
+          "bits": "0:7",
+          "mask_macro": "0x000000ff",
+          "description": "Queue selection index"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_NUM_MAX",
+      "offset": "0x34",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Maximum number of descriptors in the queue",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_NUM_MAX",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Maximum number of descriptors in the queue"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_NUM",
+      "offset": "0x38",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Number of descriptors in the queue",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_NUM",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Number of descriptors in the queue"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_ALIGN",
+      "offset": "0x3c",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Alignment of the queue",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_ALIGN",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Alignment of the queue"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_PFN",
+      "offset": "0x40",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Physical frame number of the queue descriptor table",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_PFN",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Physical frame number of the queue descriptor table"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_AVAIL",
+      "offset": "0x24",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Queue available ring",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_AVAIL",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Queue available ring"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_USED",
+      "offset": "0x28",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Queue used ring",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_USED",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Queue used ring"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_READY",
+      "offset": "0x44",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Queue readiness",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_READY",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Queue readiness"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_INTERRUPT_STATUS",
+      "offset": "0x60",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Interrupt status",
+      "bitfields": [
+        {
+          "name": "VIRTIO_INT_STATUS",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Interrupt status bits"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_INTERRUPT_ACK",
+      "offset": "0x64",
+      "width": 32,
+      "access": "WO",
+      "reset_value": "0x0",
+      "description": "Interrupt acknowledge",
+      "bitfields": [
+        {
+          "name": "VIRTIO_INT_ACK",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Interrupt acknowledge bits"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_DEVICE_FEATURES",
+      "offset": "0x10",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Device features",
+      "bitfields": [
+        {
+          "name": "VIRTIO_DEVICE_FEATURES",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Device features bits"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_DEVICE_FEATURES_SEL",
+      "offset": "0x14",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Device features selection",
+      "bitfields": [
+        {
+          "name": "VIRTIO_DEVICE_FEATURES_SEL",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Device features selection index"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_DRIVER_FEATURES",
+      "offset": "0x20",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Driver features",
+      "bitfields": [
+        {
+          "name": "VIRTIO_DRIVER_FEATURES",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Driver features bits"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_DRIVER_FEATURES_SEL",
+      "offset": "0x24",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Driver features selection",
+      "bitfields": [
+        {
+          "name": "VIRTIO_DRIVER_FEATURES_SEL",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Driver features selection index"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_QUEUE_NOTIFY",
+      "offset": "0x50",
+      "width": 32,
+      "access": "WO",
+      "reset_value": "0x0",
+      "description": "Queue notification",
+      "bitfields": [
+        {
+          "name": "VIRTIO_QUEUE_NOTIFY",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Queue notification index"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_SHM_SEL",
+      "offset": "0xac",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Shared memory region selection",
+      "bitfields": [
+        {
+          "name": "VIRTIO_SHM_SEL",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Shared memory region selection index"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_SHM_LEN_LOW",
+      "offset": "0xb0",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Shared memory region length (low)",
+      "bitfields": [
+        {
+          "name": "VIRTIO_SHM_LEN_LOW",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Shared memory region length (low)"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_SHM_LEN_HIGH",
+      "offset": "0xb4",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Shared memory region length (high)",
+      "bitfields": [
+        {
+          "name": "VIRTIO_SHM_LEN_HIGH",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Shared memory region length (high)"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_SHM_BASE_LOW",
+      "offset": "0xb8",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Shared memory region base address (low)",
+      "bitfields": [
+        {
+          "name": "VIRTIO_SHM_BASE_LOW",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Shared memory region base address (low)"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_SHM_BASE_HIGH",
+      "offset": "0xbc",
+      "width": 32,
+      "access": "RO",
+      "reset_value": "0x0",
+      "description": "Shared memory region base address (high)",
+      "bitfields": [
+        {
+          "name": "VIRTIO_SHM_BASE_HIGH",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Shared memory region base address (high)"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_CONFIG",
+      "offset": "0x100",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Configuration space",
+      "bitfields": [
+        {
+          "name": "VIRTIO_CONFIG",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Configuration space registers"
+        }
+      ]
+    },
+    {
+      "name": "VIRTIO_MMIO_STATUS",
+      "offset": "0x70",
+      "width": 32,
+      "access": "RW",
+      "reset_value": "0x0",
+      "description": "Device status",
+      "bitfields": [
+        {
+          "name": "VIRTIO_STATUS",
+          "bits": "0:31",
+          "mask_macro": "0xffffffff",
+          "description": "Device status bits"
+        }
+      ]
+    }
+  ],
+  "init_sequence": [
+    {
+      "step": 1,
+      "operation": "MMIO Map",
+      "source_function": "devm_platform_ioremap_resource",
+      "target_register": "VIRTIO_MMIO_BASE",
+      "offset": "0x0",
+      "description": "Map the MMIO region"
+    },
+    {
+      "step": 2,
+      "operation": "Hardware Reset",
+      "source_function": "vm_reset",
+      "description": "Reset the device"
+    },
+    {
+      "step": 3,
+      "operation": "Write Register",
+      "source_function": "readl",
+      "target_register": "VIRTIO_MMIO_MAGIC_VALUE",
+      "offset": "0x0",
+      "value_or_mask": "0x00000000",
+      "description": "Read the magic value"
+    },
+    {
+      "step": 4,
+      "operation": "Read & Poll",
+      "source_function": "readl",
+      "target_register": "VIRTIO_MMIO_MAGIC_VALUE",
+      "offset": "0x0",
+      "value_or_mask": "0x00000000",
+      "poll_condition": "magic != ('v' | 'i' << 8 | 'r' << 16 | 't' << 24)",
+      "description": "Poll for correct magic value"
+    },
+    {
+      "step": 5,
+      "operation": "Read Register",
+      "source_function": "readl",
+      "target_register": "VIRTIO_MMIO_VERSION",
+      "offset": "0x4",
+      "description": "Read the device version"
+    },
+    {
+      "step": 6,
+      "operation": "Read & Poll",
+      "source_function": "readl",
+      "target_register": "VIRTIO_MMIO_VERSION",
+      "offset": "0x4",
+      "poll_condition": "vm_dev->version < 1 || vm_dev->version > 3",
+      "description": "Poll for correct device version"
+    },
+    {
+      "step": 7,
+      "operation": "Read Register",
+      "source_function": "readl",
+      "target_register": "VIRTIO_MMIO_DEVICE_ID",
+      "offset": "0xc",
+      "description": "Read the device ID"
+    },
+    {
+      "step": 8,
+      "operation": "Read & Poll",
+      "source_function": "readl",
+      "target_register": "VIRTIO_MMIO_DEVICE_ID",
+      "offset": "0xc",
+      "value_or_mask": "vm_dev->vdev.id.device == 0",
+      "poll_condition": "vm_dev->vdev.id.device == 0",
+      "description": "Check for dummy device"
+    },
+    {
+      "step": 9,
+      "operation": "Read Register",
+      "source_function": "readl",
+      "target_register": "VIRTIO_MMIO_VENDOR_ID",
+      "offset": "0x8",
+      "description": "Read the vendor ID"
+    },
+    {
+      "step": 10,
+      "operation": "Write Register",
+      "source_function": "writel",
+      "target_register": "VIRTIO_MMIO_GUEST_PAGE_SIZE",
+      "offset": "0x0",
+      "value_or_mask": "PAGE_SIZE",
+      "description": "Set guest page size"
+    },
+    {
+      "step": 11,
+      "operation": "DMA Setup",
+      "source_function": "dma_set_mask_and_coherent",
+      "description": "Set DMA mask and coherent mask"
+    },
+    {
+      "step": 12,
+      "operation": "Interrupt Hook",
+      "source_function": "request_irq",
+      "description": "Request interrupt hook"
+    },
+    {
+      "step": 13,
+      "operation": "Register Device",
+      "source_function": "register_virtio_device",
+      "description": "Register the device"
+    }
+  ],
+  "runtime_operations": {
+    "probe_handler": "virtio_mmio_probe",
+    "remove_handler": "virtio_mmio_remove",
+    "read_handlers": [
+      {
+        "operation_name": "get_config",
+        "c_function": "vm_get",
+        "registers_touched": [
+          "VIRTIO_MMIO_CONFIG"
+        ],
+        "description": "Read configuration space"
+      }
+    ],
+    "write_handlers": [
+      {
+        "operation_name": "set_config",
+        "c_function": "vm_set",
+        "registers_touched": [
+          "VIRTIO_MMIO_CONFIG"
+        ],
+        "description": "Write configuration space"
+      }
+    ],
+    "dma_setup": {
+      "allocation_api": "dma_alloc_coherent",
+      "address_mask_bits": 64,
+      "descriptor_rings": [],
+      "coherency_notes": "Barrier/coherency notes or null"
+    },
+    "interrupt_lifecycle": {
+      "irq_handler": "vm_interrupt",
+      "registration_api": "request_irq",
+      "irq_flags": [
+        "IRQF_SHARED"
+      ],
+      "status_register": "VIRTIO_MMIO_INTERRUPT_STATUS",
+      "ack_register": "VIRTIO_MMIO_INTERRUPT_ACK",
+      "mask_register": "VIRTIO_MMIO_QUEUE_NOTIFY",
+      "ack_mechanism": "Write-1-to-clear ICR",
+      "flow_steps": [
+        {
+          "step": 1,
+          "operation": "Read Register",
+          "source_function": "readl",
+          "target_register": "VIRTIO_MMIO_INTERRUPT_STATUS",
+          "offset": "0x30",
+          "description": "Read interrupt status"
+        },
+        {
+          "step": 2,
+          "operation": "Write Register",
+          "source_function": "writel",
+          "target_register": "VIRTIO_MMIO_INTERRUPT_ACK",
+          "offset": "0x34",
+          "description": "Acknowledge interrupts"
+        }
+      ]
+    }
+  },
+  "concurrency_locks": [
+    {
+      "linux_primitive": "spin_lock_irqsave(&port->lock, flags)",
+      "abstract_lock_type": "IRQSafeSpinlock",
+      "protected_resources": [
+        "MMIO region"
+      ],
+      "bare_metal_recommendation": "Use IRQ-safe spinlocks"
+    }
+  ],
+  "migration_notes": {
+    "linux_to_microkernel_mappings": [
+      {
+        "linux_api": "readl / writel",
+        "microkernel_equivalent": "MmioRegion::read32 / write32",
+        "notes": "Bare-metal C++ porting note"
+      }
+    ],
+    "architectural_caveats": [
+      "Important bare-metal porting caveat"
+    ]
+  }
+}

@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kernelite.dev/schemas/driver_spec.schema.json",
+  "title": "DriverSpec",
+  "type": "object",
+  "required": ["driver_name"],
+  "properties": {
+    "device_name": {
+      "type": "string",
+      "default": "",
+      "description": "Human-readable hardware controller or peripheral name"
+    },
+    "driver_name": {
+      "type": "string",
+      "description": "Canonical name of the Linux driver module"
+    },
+    "compatibility": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Compatible DTB strings or hardware matching identifiers"
+    },
+    "hardware_info": { "$ref": "#/$defs/HardwareInfo" },
+    "metadata": { "$ref": "#/$defs/DriverMetadata" },
+    "matching_tables": { "$ref": "#/$defs/MatchingTables" },
+    "interfaces": { "$ref": "#/$defs/DriverInterfaces" },
+    "lifecycle": { "$ref": "#/$defs/DriverLifecycle" },
+    "structs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "register_map": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/RegisterMap" },
+      "default": []
+    },
+    "init_sequence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SequenceStep" },
+      "default": []
+    },
+    "runtime_operations": { "$ref": "#/$defs/RuntimeOperations" },
+    "concurrency_locks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ConcurrencyLock" },
+      "default": []
+    },
+    "migration_notes": { "$ref": "#/$defs/MigrationNotes" }
+  },
+  "$defs": {
+    "ApiMigrationMapping": {
+      "type": "object",
+      "required": ["linux_api", "microkernel_equivalent", "notes"],
+      "properties": {
+        "linux_api": { "type": "string" },
+        "microkernel_equivalent": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "BaseAddressRegion": {
+      "type": "object",
+      "required": ["region_id"],
+      "properties": {
+        "region_id": { "type": "string" },
+        "name": { "type": ["string", "null"], "default": null },
+        "base_offset": { "type": "string", "default": "0x0" },
+        "size_hint": { "type": ["string", "null"], "default": null },
+        "description": { "type": ["string", "null"], "default": null }
+      }
+    },
+    "Bitfield": {
+      "type": "object",
+      "required": ["name", "mask_macro"],
+      "properties": {
+        "name": { "type": "string" },
+        "bits": { "type": ["string", "null"], "default": null },
+        "mask_macro": { "type": "string" },
+        "access": {
+          "type": ["string", "null"],
+          "enum": ["RW", "RO", "WO", "R", "W", "W1C", null],
+          "default": null
+        },
+        "reset_value": { "type": ["string", "null"], "default": null },
+        "description": { "type": ["string", "null"], "default": null }
+      }
+    },
+    "ConcurrencyLock": {
+      "type": "object",
+      "required": ["linux_primitive", "abstract_lock_type", "bare_metal_recommendation"],
+      "properties": {
+        "linux_primitive": { "type": "string" },
+        "abstract_lock_type": {
+          "type": "string",
+          "enum": ["IRQSafeSpinlock", "Spinlock", "SleepableMutex", "ReadWriteLock", "Atomic", "None"]
+        },
+        "protected_resources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "bare_metal_recommendation": { "type": "string" }
+      }
+    },
+    "DMASpec": {
+      "type": "object",
+      "properties": {
+        "allocation_api": { "type": ["string", "null"], "default": null },
+        "address_mask_bits": { "type": ["integer", "null"], "default": null },
+        "descriptor_rings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "coherency_notes": { "type": ["string", "null"], "default": null }
+      }
+    },
+    "DeviceMatch": {
+      "type": "object",
+      "properties": {
+        "compatible": { "type": ["string", "null"], "default": null },
+        "vendor_id": { "type": ["string", "null"], "default": null },
+        "device_id": { "type": ["string", "null"], "default": null },
+        "raw_entry": { "type": "object", "default": {} }
+      }
+    },
+    "DriverInterfaces": {
+      "type": "object",
+      "properties": {
+        "file_operations": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "default": {}
+        },
+        "sysfs_attributes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SysfsAttribute" },
+          "default": []
+        },
+        "procfs_entries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "ioctl_commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/IoctlCommand" },
+          "default": []
+        }
+      }
+    },
+    "DriverLifecycle": {
+      "type": "object",
+      "properties": {
+        "probe_function": { "type": ["string", "null"], "default": null },
+        "remove_function": { "type": ["string", "null"], "default": null },
+        "shutdown_function": { "type": ["string", "null"], "default": null },
+        "suspend_function": { "type": ["string", "null"], "default": null },
+        "resume_function": { "type": ["string", "null"], "default": null },
+        "runtime_suspend_function": { "type": ["string", "null"], "default": null },
+        "runtime_resume_function": { "type": ["string", "null"], "default": null },
+        "init_function": { "type": ["string", "null"], "default": null },
+        "exit_function": { "type": ["string", "null"], "default": null }
+      }
+    },
+    "DriverMetadata": {
+      "type": "object",
+      "properties": {
+        "author": { "type": ["string", "null"], "default": null },
+        "license": { "type": ["string", "null"], "default": null },
+        "description": { "type": ["string", "null"], "default": null },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ModuleParam" },
+          "default": []
+        }
+      }
+    },
+    "HardwareInfo": {
+      "type": "object",
+      "properties": {
+        "bus_type": {
+          "type": "string",
+          "enum": ["mmio", "pci", "platform", "i2c", "spi", "usb", "uart", "other"],
+          "default": "mmio"
+        },
+        "compatible_strings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "vendor_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "device_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "base_address_offsets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/BaseAddressRegion" },
+          "default": []
+        },
+        "endianness": {
+          "type": "string",
+          "enum": ["little", "big", "configurable", "unknown"],
+          "default": "little"
+        },
+        "irq_lines": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "InterruptLifecycle": {
+      "type": "object",
+      "properties": {
+        "irq_handler": { "type": ["string", "null"], "default": null },
+        "threaded_handler": { "type": ["string", "null"], "default": null },
+        "registration_api": { "type": ["string", "null"], "default": null },
+        "irq_flags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "status_register": { "type": ["string", "null"], "default": null },
+        "ack_register": { "type": ["string", "null"], "default": null },
+        "mask_register": { "type": ["string", "null"], "default": null },
+        "ack_mechanism": { "type": ["string", "null"], "default": null },
+        "flow_steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SequenceStep" },
+          "default": []
+        }
+      }
+    },
+    "IoctlCommand": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "dir": { "type": ["string", "null"], "default": null },
+        "type": { "type": ["string", "null"], "default": null },
+        "nr": { "type": ["string", "null"], "default": null },
+        "size": { "type": ["string", "null"], "default": null }
+      }
+    },
+    "MatchingTables": {
+      "type": "object",
+      "properties": {
+        "of_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] },
+        "pci_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] },
+        "usb_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] },
+        "acpi_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] },
+        "i2c_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] },
+        "spi_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] },
+        "platform_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] },
+        "hid_device_id": { "type": "array", "items": { "$ref": "#/$defs/DeviceMatch" }, "default": [] }
+      }
+    },
+    "MigrationNotes": {
+      "type": "object",
+      "properties": {
+        "linux_to_microkernel_mappings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ApiMigrationMapping" },
+          "default": []
+        },
+        "architectural_caveats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "ModuleParam": {
+      "type": "object",
+      "required": ["name", "type", "permissions"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "permissions": { "type": "string" },
+        "description": { "type": ["string", "null"], "default": null }
+      }
+    },
+    "RegisterMap": {
+      "type": "object",
+      "required": ["name", "offset"],
+      "properties": {
+        "name": { "type": "string" },
+        "offset": { "type": "string" },
+        "offset_expression": { "type": ["string", "null"], "default": null },
+        "width": { "type": "integer", "minimum": 8, "maximum": 64, "default": 32 },
+        "access": {
+          "type": "string",
+          "enum": ["RW", "RO", "WO", "R", "W", "W1C", "UNKNOWN"],
+          "default": "RW"
+        },
+        "reset_value": { "type": ["string", "null"], "default": null },
+        "description": { "type": ["string", "null"], "default": null },
+        "bitfields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Bitfield" },
+          "default": []
+        }
+      }
+    },
+    "RuntimeOpMapping": {
+      "type": "object",
+      "required": ["operation_name", "c_function"],
+      "properties": {
+        "operation_name": { "type": "string" },
+        "c_function": { "type": "string" },
+        "registers_touched": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "description": { "type": ["string", "null"], "default": null }
+      }
+    },
+    "RuntimeOperations": {
+      "type": "object",
+      "properties": {
+        "probe_handler": { "type": ["string", "null"], "default": null },
+        "remove_handler": { "type": ["string", "null"], "default": null },
+        "read_handlers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RuntimeOpMapping" },
+          "default": []
+        },
+        "write_handlers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RuntimeOpMapping" },
+          "default": []
+        },
+        "transmit_handler": {
+          "anyOf": [{ "$ref": "#/$defs/RuntimeOpMapping" }, { "type": "null" }],
+          "default": null
+        },
+        "receive_handler": {
+          "anyOf": [{ "$ref": "#/$defs/RuntimeOpMapping" }, { "type": "null" }],
+          "default": null
+        },
+        "dma_setup": {
+          "anyOf": [{ "$ref": "#/$defs/DMASpec" }, { "type": "null" }],
+          "default": null
+        },
+        "interrupt_lifecycle": { "$ref": "#/$defs/InterruptLifecycle" }
+      }
+    },
+    "SequenceStep": {
+      "type": "object",
+      "required": ["step", "operation", "source_function", "description"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1 },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "Write Register",
+            "Read & Poll",
+            "Read Register",
+            "Memory Allocate",
+            "MMIO Map",
+            "DMA Setup",
+            "Interrupt Hook",
+            "Clock/Reset Control",
+            "Hardware Reset",
+            "Register Device",
+            "Lock Acquire",
+            "Lock Release",
+            "Other"
+          ]
+        },
+        "source_function": { "type": "string" },
+        "target_register": { "type": ["string", "null"], "default": null },
+        "offset": { "type": ["string", "null"], "default": null },
+        "value_or_mask": { "type": ["string", "null"], "default": null },
+        "poll_condition": { "type": ["string", "null"], "default": null },
+        "description": { "type": "string" }
+      }
+    },
+    "SysfsAttribute": {
+      "type": "object",
+      "required": ["name", "mode"],
+      "properties": {
+        "name": { "type": "string" },
+        "mode": { "type": "string" },
+        "show_function": { "type": ["string", "null"], "default": null },
+        "store_function": { "type": ["string", "null"], "default": null }
+      }
+    }
+  }
+}

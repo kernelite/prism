@@ -1,23 +1,30 @@
 class KernelitePrismError(Exception):
     """Base exception class for Kernelite Prism errors."""
-    pass
 
 
 class ConfigurationError(KernelitePrismError):
     """Raised when environment variables, hardware devices, or options are misconfigured."""
-    pass
 
 
 class AggregationError(KernelitePrismError):
     """Raised when context aggregation fails (e.g., path not found or unreadable)."""
-    pass
+
+
+class ASTParsingError(KernelitePrismError):
+    """Raised when Tree-sitter C AST parsing encounters an unrecoverable failure."""
 
 
 class ExtractionError(KernelitePrismError):
-    """Raised when local LLM inference or Pydantic parsing fails."""
-    pass
+    """Raised when LLM inference or schema-enforced parsing fails."""
+
+
+class SchemaValidationError(KernelitePrismError):
+    """Raised when a driver specification fails JSON Schema or AST grounding verification."""
 
 
 class SerializationError(KernelitePrismError):
     """Raised when output formatting/writing fails."""
-    pass
+
+
+class DocumentationError(KernelitePrismError):
+    """Raised when Markdown / Mermaid documentation rendering fails."""
