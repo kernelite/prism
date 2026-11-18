@@ -10,7 +10,9 @@ Platform bus driver for memory mapped virtio devices
 
 - **Driver Module:** `virtio_mmio`
 - **Device Name:** Virtio MMIO Controller
-- **License / Author:** GPL — Pawel Moll <pawel.moll@arm.com>- **Primary Driver Structs:** `platform_driver`, `of_device_id`, `acpi_device_id`- **Probe / Remove Entry Points:** `virtio_mmio_probe` / `virtio_mmio_remove`
+- **License / Author:** GPL — Pawel Moll <pawel.moll@arm.com>
+- **Primary Driver Structs:** `platform_driver`, `of_device_id`, `acpi_device_id`
+- **Probe / Remove Entry Points:** `virtio_mmio_probe` / `virtio_mmio_remove`
 
 ### Compatible Hardware Nodes & Device IDs
 

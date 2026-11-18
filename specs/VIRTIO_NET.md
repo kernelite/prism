@@ -10,7 +10,9 @@ Virtio Network Driver
 
 - **Driver Module:** `virtio_net`
 - **Device Name:** Virtio Network
-- **License / Author:** GPL — Linux Kernel Maintainers- **Primary Driver Structs:** `net_device_ops`, `virtio_driver`, `send_queue`, `receive_queue`, `virtnet_info`- **Probe / Remove Entry Points:** `virtnet_probe` / `virtnet_remove`
+- **License / Author:** GPL — Linux Kernel Maintainers
+- **Primary Driver Structs:** `net_device_ops`, `virtio_driver`, `send_queue`, `receive_queue`, `virtnet_info`
+- **Probe / Remove Entry Points:** `virtnet_probe` / `virtnet_remove`
 
 ### Compatible Hardware Nodes & Device IDs
 

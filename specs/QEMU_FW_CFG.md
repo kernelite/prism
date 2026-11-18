@@ -10,7 +10,9 @@ QEMU fw_cfg sysfs support
 
 - **Driver Module:** `fw_cfg_sysfs`
 - **Device Name:** QEMU fw_cfg sysfs support
-- **License / Author:** GPL — Gabriel L. Somlo <somlo@cmu.edu>- **Primary Driver Structs:** `of_device_id`, `acpi_device_id`, `platform_driver`- **Probe / Remove Entry Points:** `fw_cfg_sysfs_probe` / `fw_cfg_sysfs_remove`
+- **License / Author:** GPL — Gabriel L. Somlo <somlo@cmu.edu>
+- **Primary Driver Structs:** `of_device_id`, `acpi_device_id`, `platform_driver`
+- **Probe / Remove Entry Points:** `fw_cfg_sysfs_probe` / `fw_cfg_sysfs_remove`
 
 ### Compatible Hardware Nodes & Device IDs
 

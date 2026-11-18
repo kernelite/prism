@@ -10,7 +10,9 @@ ARM General Interrupt Controller (GIC) driver
 
 - **Driver Module:** `gic`
 - **Device Name:** ARM GIC
-- **License / Author:** GPL-2.0-only — ARM Limited- **Primary Driver Structs:** `platform_driver`, `irqchip`, `irqchip/chained_irq`, `irqchip/arm-gic`- **Probe / Remove Entry Points:** `gic_of_init` / `gic_of_init_child`
+- **License / Author:** GPL-2.0-only — ARM Limited
+- **Primary Driver Structs:** `platform_driver`, `irqchip`, `irqchip/chained_irq`, `irqchip/arm-gic`
+- **Probe / Remove Entry Points:** `gic_of_init` / `gic_of_init_child`
 
 ### Compatible Hardware Nodes & Device IDs
 

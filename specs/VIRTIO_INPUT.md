@@ -10,7 +10,9 @@ Virtio Input Device Driver
 
 - **Driver Module:** `virtio_input`
 - **Device Name:** Virtio Input Device
-- **License / Author:** GPL — Gerd Hoffmann <kraxel@redhat.com>- **Primary Driver Structs:** `virtio_driver`, `input_dev`, `virtio_device`- **Probe / Remove Entry Points:** `virtinput_probe` / `virtinput_remove`
+- **License / Author:** GPL — Gerd Hoffmann <kraxel@redhat.com>
+- **Primary Driver Structs:** `virtio_driver`, `input_dev`, `virtio_device`
+- **Probe / Remove Entry Points:** `virtinput_probe` / `virtinput_remove`
 
 ### Compatible Hardware Nodes & Device IDs
 

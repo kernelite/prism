@@ -10,7 +10,9 @@ ARM AMBA PL011 UART driver
 
 - **Driver Module:** `amba_pl011`
 - **Device Name:** ARM AMBA Serial Port
-- **License / Author:** GPL — ARM Ltd/Deep Blue Solutions Ltd- **Primary Driver Structs:** `platform_driver`, `uart_ops`, `uart_driver`, `console`, `of_device_id`, `acpi_device_id`, `amba_driver`- **Probe / Remove Entry Points:** `pl011_probe` / `pl011_remove`
+- **License / Author:** GPL — ARM Ltd/Deep Blue Solutions Ltd
+- **Primary Driver Structs:** `platform_driver`, `uart_ops`, `uart_driver`, `console`, `of_device_id`, `acpi_device_id`, `amba_driver`
+- **Probe / Remove Entry Points:** `pl011_probe` / `pl011_remove`
 
 ### Compatible Hardware Nodes & Device IDs
 
